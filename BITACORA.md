@@ -149,3 +149,10 @@ máscara corporal y las mismas coordenadas LPS (`src/ct_alta.py`).
   recortado al cuerpo, 17.5 MB) y el SPECT se superpone como capa suavizada. Se agregaron ventanas
   de partes blandas y hueso, «solo CT» y zoom (1.6× por defecto); el umbral por defecto del SPECT
   sube para que el fondo corporal no tiña todo el corte.
+
+**Agregado (mismo día): contornos en la página.** `src/contornos_web.py` lleva las regiones finales
+(TotalSegmentator + umbral) a los cortes de la página a 1.65 mm (vecino más cercano desde la grilla
+de 2 mm), 2.2 MB. El visor dibuja el borde de cada estructura sobre el CT con un interruptor por
+estructura: tiroides, esófago, tráquea y vasos encendidos; salivales (marcadas «aprox.», son
+elipsoides), hueso y pulmón apagados. Revisados a ojo en un corte medio tiroideo: lóbulos alrededor de
+la tráquea, esófago posterior y carótidas laterales.

@@ -87,6 +87,7 @@ src/exportar_dicom.py DICOM CT + NM (reglas del visor_dicom)
 src/verificar.py      comprueba los DICOM contra las reglas del visor y de la fusión
 src/exportar_web.py   datos compactos y ZIP para la página (docs/)
 src/ct_alta.py        CT a la resolución del tomógrafo para la página y los DICOM
+src/contornos_web.py  contornos de las regiones para la página
 docs/                 página de GitHub Pages con los cinco casos
 tests/                validación del motor
 salida/               resultados (los pesados no se versionan)
