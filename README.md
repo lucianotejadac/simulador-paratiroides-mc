@@ -5,6 +5,9 @@ dispersión Compton, colimador, resolución y ruido de Poisson), a partir de los
 El CT da el mapa de atenuación; la biodistribución del radiofármaco se construye sobre su segmentación
 y el adenoma se coloca a voluntad, así que cada estudio simulado tiene la verdad conocida.
 
+Página con los cinco casos (cortes fusionados, cine de proyecciones, verdad oculta y DICOM descargables):
+<https://lucianotejadac.github.io/simulador-paratiroides-mc/>
+
 Pensado para docencia: proyecciones y volúmenes reconstruidos en DICOM listos para el
 [visor_dicom](https://github.com/lucianotejadac/visor_dicom) y para MicroDicom, fusionables con el CT.
 
@@ -67,6 +70,9 @@ src/montecarlo.py     motor Monte Carlo (Numba)
 src/simular_caso.py   adquisición de un caso (proyecciones npz + png + adquisicion.json)
 src/reconstruir.py    OSEM con atenuación y filtro posterior
 src/exportar_dicom.py DICOM CT + NM (reglas del visor_dicom)
+src/verificar.py      comprueba los DICOM contra las reglas del visor y de la fusión
+src/exportar_web.py   datos compactos y ZIP para la página (docs/)
+docs/                 página de GitHub Pages con los cinco casos
 tests/                validación del motor
 salida/               resultados (los pesados no se versionan)
 ```

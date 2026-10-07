@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paratiroides simuladas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#f1efe9;--panel:#fff;--ink:#1d1b16;--muted:#6a6459;--line:#d8d2c6;--accent:#a3451b;--accent-ink:#fff;--soft:#f5e6dc;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--disp:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#15130f;--panel:#1f1c17;--ink:#ece6da;--muted:#a39a8a;--line:#36302a;--accent:#e2804f;--accent-ink:#1a0e06;--soft:#2c2118}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#15130f;--panel:#1f1c17;--ink:#ece6da;--muted:#a39a8a;--line:#36302a;--accent:#e2804f;--accent-ink:#1a0e06;--soft:#2c2118}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 40px;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-family:var(--disp);font-weight:600;font-size:26px;margin:0}
+.tag{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.note{background:var(--soft);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;max-width:76ch;margin:0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.lbl{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+button{font:500 13px var(--body);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select{font:13px var(--body);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+input[type=range]{accent-color:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:10px;align-content:start}
+.card h2{font-family:var(--disp);font-weight:600;font-size:16px;margin:0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card h2 small{font:400 11px var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.stage{background:#000;border-radius:6px;overflow:hidden;position:relative;max-width:100%}
+.stage canvas{display:block;width:100%;height:auto;image-rendering:auto}
+.hud{position:absolute;left:10px;top:8px;font-family:var(--mono);font-size:12px;color:#f3e9d8;text-shadow:0 1px 2px #000;pointer-events:none}
+.fila{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.fila input[type=range]{flex:1 1 140px}
+.t{font-family:var(--mono);font-variant-numeric:tabular-nums;min-width:7ch}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{font:500 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+td{padding:5px 6px;border-bottom:1px solid var(--line)}td.n{text-align:right;font-family:var(--mono)}
+.verdad{display:none;background:var(--soft);border-radius:6px;padding:8px 12px}
+.verdad.on{display:block}
+a{color:var(--accent)}
+footer{font-size:12px;color:var(--muted);max-width:80ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Cintigrafía de paratiroides simulada</h1><span class="tag">SPECT con Tc-99m sestamibi · Monte Carlo sobre un CT real · verdad conocida</span></header>
+  <p class="note">Cinco estudios SPECT sobre el mismo cuello (CT público de TCIA), con la física real de la adquisición: atenuación, dispersión Compton, colimador LEHR, ventana de energía y ruido de Poisson. En cuatro hay un adenoma paratiroideo de tamaño, sitio y captación elegidos. Mira el estudio, decide dónde está, y recién entonces pide la verdad.</p>
+  <div class="bar">
+    <span class="lbl">Caso</span><select id="caso" aria-label="Caso"></select>
+    <span class="lbl">Fase</span>
+    <button id="f-precoz" class="primary">Precoz (15 min)</button><button id="f-tardia">Tardía (2 h)</button>
+    <button id="verdad">Mostrar la verdad</button>
+    <a id="zip" href="#" download>Descargar DICOM (CT + SPECT)</a>
+  </div>
+  <div class="grid">
+    <div class="card"><h2>Cortes axiales fusionados <small>OSEM con corrección de atenuación · filtro 6 mm</small></h2>
+      <div class="stage"><canvas id="ax" width="512" height="512"></canvas><div class="hud" id="hud-ax"></div></div>
+      <div class="fila"><span class="lbl">Corte</span><input type="range" id="corte" min="0" max="57" value="20" aria-label="Corte axial"><span class="t" id="corte-t"></span></div>
+      <div class="fila"><span class="lbl">Fusión</span><input type="range" id="mezcla" min="0" max="100" value="65" aria-label="Opacidad del SPECT"><span class="lbl">Umbral</span><input type="range" id="umbral" min="0" max="60" value="12" aria-label="Umbral del SPECT"></div>
+      <div class="stage" style="max-width:100%"><canvas id="mip" width="512" height="232"></canvas><div class="hud">MIP anterior del SPECT (cabeza arriba)</div></div>
+    </div>
+    <div class="card"><h2>Proyecciones adquiridas <small>60 ángulos · 25 s cada una · cine</small></h2>
+      <div class="stage"><canvas id="pr" width="512" height="512"></canvas><div class="hud" id="hud-pr"></div></div>
+      <div class="fila"><button id="play" class="primary">Pausar</button><button id="anterior">Ir a la anterior</button><input type="range" id="angulo" min="0" max="59" value="45" aria-label="Ángulo"><span class="t" id="angulo-t"></span></div>
+      <div class="verdad" id="caja-verdad"></div>
+      <table><thead><tr><th>parámetro</th><th class="n">precoz</th><th class="n">tardía</th></tr></thead><tbody id="tabla"></tbody></table>
+    </div>
+  </div>
+  <footer>El CT es el caso 2 de la entrega docente de PET/CT de The Cancer Imaging Archive (anónimo, desidentificado según DICOM PS 3.15); la tiroides, la tráquea, el hueso y las salivales se segmentaron sobre él y la biodistribución del sestamibi se asignó por región. Cada fotón de 140 keV se siguió por el cuello hasta el colimador con el método de Woodcock, con interacciones fotoeléctrica y Compton y detección forzada hacia los 60 ángulos. Reconstrucción OSEM de 4 iteraciones y 6 subconjuntos con corrección de atenuación por el CT. Motor validado contra la sensibilidad y la resolución de una LEHR y contra la atenuación y dispersión en agua. Los DICOM descargables (CT, SPECT reconstruido y proyecciones crudas) abren en <a href="https://lucianotejadac.github.io/visor_dicom/">visor_dicom</a> y en MicroDicom, fusionables. Código, pruebas y bitácora en <a href="https://github.com/lucianotejadac/simulador-paratiroides-mc">github.com/lucianotejadac/simulador-paratiroides-mc</a> (MIT). Otros simuladores en <a href="https://lucianotejadac.github.io/">lucianotejadac.github.io</a>.</footer>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var NOMBRES={"normal":"Caso A","inferior-derecho-12":"Caso B","inferior-izquierdo-8":"Caso C","retroesofagico-10":"Caso D","mediastinico-15":"Caso E"};
+  var SITIOS={"inferior-derecho":"polo inferior del lóbulo derecho, posterior","inferior-izquierdo":"polo inferior del lóbulo izquierdo, posterior","retroesofagico":"ectópico retroesofágico","mediastinico":"ectópico mediastínico superior"};
+  var indice=null, meta=null, datos={}, caso=null, fase='precoz', verdad=false, playing=true, frame=45, last=null;
+  var axC=$('ax').getContext('2d'), prC=$('pr').getContext('2d'), mipC=$('mip').getContext('2d');
+  var N=128, NZ=58;
+  function cargarBin(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(function(b){ return new Uint8Array(b); }); }
+  function cargarCaso(c){
+    caso=c; datos={}; $('zip').href='dicom/'+c+'.zip';
+    var base='datos/'+c+'/';
+    Promise.all([fetch(base+'meta.json').then(function(r){return r.json();}), cargarBin(base+'ct.bin'), cargarBin(base+'nm_precoz.bin'), cargarBin(base+'nm_tardia.bin'), cargarBin(base+'proy_precoz.bin'), cargarBin(base+'proy_tardia.bin')])
+      .then(function(r){ meta=r[0]; NZ=meta.nz; N=meta.matriz; datos={ct:r[1],nm:{precoz:r[2],tardia:r[3]},proy:{precoz:r[4],tardia:r[5]}}; $('corte').max=NZ-1; $('angulo').max=meta.fases.precoz.n_proy-1; verdad=false; $('verdad').textContent='Mostrar la verdad'; tabla(); dibujarTodo(); })
+      .catch(function(e){ $('hud-ax').textContent='No pude cargar '+e.message; });
+  }
+  function tabla(){
+    var p=meta.fases.precoz, t=meta.fases.tardia, c=meta.camara;
+    var filas=[['cuentas por proyección (media)',p.cuentas_por_proyeccion,t.cuentas_por_proyeccion],['actividad en el campo (MBq)',p.actividad_MBq,t.actividad_MBq],['máximo por píxel (cuentas)',p.max_pixel,t.max_pixel],['historias Monte Carlo',meta.historias,meta.historias],['cómputo (s)',p.segundos_mc,t.segundos_mc]];
+    $('tabla').innerHTML=filas.map(function(f){return '<tr><td>'+f[0]+'</td><td class="n">'+f[1]+'</td><td class="n">'+f[2]+'</td></tr>';}).join('')+'<tr><td colspan="3" style="color:var(--muted)">Cámara: LEHR, '+c.angulos+' ángulos en '+c.arco_grados+'°, radio '+c.radio_cm+' cm, matriz '+c.matriz+' de '+c.pixel_mm+' mm, '+c.tiempo_s+' s por proyección, ventana '+c.ventana_keV[0]+'–'+c.ventana_keV[1]+' keV.</td></tr>';
+    var v=meta.adenoma, caja=$('caja-verdad');
+    if(v){ caja.innerHTML='<b>Verdad:</b> adenoma de '+v.diametro_mm+' mm ('+v.volumen_ml+' mL) en '+SITIOS[v.sitio]+', con captación '+v.relacion+' veces la de la tiroides en la fase precoz y retención del 80 % en la tardía. En el visor se marca con un círculo en los cortes que lo contienen y en la MIP.'; }
+    else { caja.innerHTML='<b>Verdad:</b> este caso no tiene adenoma. Toda captación focal que hayas visto es tiroides, glándula salival o ruido.'; }
+  }
+  var LUT=new Uint8ClampedArray(256*3);
+  for(var i=0;i<256;i++){ var t=i/255; LUT[3*i]=Math.min(255,Math.round(255*Math.min(1,t*2.2))); LUT[3*i+1]=Math.round(255*Math.max(0,Math.min(1,(t-0.3)*1.8))); LUT[3*i+2]=Math.round(255*Math.max(0,Math.min(1,(t-0.75)*4))); }
+  function dibujarAxial(){
+    if(!datos.ct) return;
+    var k=parseInt($('corte').value,10), mez=$('mezcla').value/100, um=parseInt($('umbral').value,10);
+    var img=axC.createImageData(N,N), ct=datos.ct, nm=datos.nm[fase], off=k*N*N;
+    for(var i=0;i<N*N;i++){ var g=ct[off+i], v=nm[off+i], r=g,gg=g,b=g; if(v>um){ var a=mez*Math.min(1,(v-um)/40+0.35); r=g*(1-a)+LUT[3*v]*a; gg=g*(1-a)+LUT[3*v+1]*a; b=g*(1-a)+LUT[3*v+2]*a; } img.data[4*i]=r; img.data[4*i+1]=gg; img.data[4*i+2]=b; img.data[4*i+3]=255; }
+    var tmp=document.createElement('canvas'); tmp.width=N; tmp.height=N; tmp.getContext('2d').putImageData(img,0,0);
+    axC.imageSmoothingEnabled=true; axC.clearRect(0,0,512,512); axC.drawImage(tmp,0,0,512,512);
+    var esc=512/N;
+    if(verdad&&meta.adenoma){ var c=meta.adenoma.centro_grilla_zyx, rz=meta.adenoma.diametro_mm/2/meta.pixel_mm; var dz=Math.abs(k-c[0]); if(dz<=rz+0.5){ var rr=Math.sqrt(Math.max(0,rz*rz-dz*dz))+1.2; axC.strokeStyle='#4df0c8'; axC.lineWidth=2; axC.beginPath(); axC.arc((c[2]+0.5)*esc,(c[1]+0.5)*esc,rr*esc,0,6.283); axC.stroke(); } }
+    $('hud-ax').textContent='corte '+(k+1)+' de '+NZ+' · '+(fase==='precoz'?'precoz':'tardía')+' · D ← → I';
+    $('corte-t').textContent=((k-NZ/2)*meta.pixel_mm/10).toFixed(1)+' cm';
+  }
+  function dibujarMip(){
+    if(!datos.ct) return;
+    var nm=datos.nm[fase], img=mipC.createImageData(N,NZ);
+    for(var z=0;z<NZ;z++){ for(var x=0;x<N;x++){ var m=0; for(var y=0;y<N;y++){ var v=nm[(z*N+y)*N+x]; if(v>m)m=v; } var p=((NZ-1-z)*N+x)*4; img.data[p]=LUT[3*m]; img.data[p+1]=LUT[3*m+1]; img.data[p+2]=LUT[3*m+2]; img.data[p+3]=255; } }
+    var tmp=document.createElement('canvas'); tmp.width=N; tmp.height=NZ; tmp.getContext('2d').putImageData(img,0,0);
+    mipC.clearRect(0,0,512,232); mipC.drawImage(tmp,0,0,512,232);
+    var k=parseInt($('corte').value,10), ey=232/NZ; mipC.strokeStyle='rgba(255,255,255,0.6)'; mipC.lineWidth=1; mipC.beginPath(); mipC.moveTo(0,(NZ-1-k+0.5)*ey); mipC.lineTo(512,(NZ-1-k+0.5)*ey); mipC.stroke();
+    if(verdad&&meta.adenoma){ var c=meta.adenoma.centro_grilla_zyx, r=meta.adenoma.diametro_mm/2/meta.pixel_mm+1.2; mipC.strokeStyle='#4df0c8'; mipC.lineWidth=2; mipC.beginPath(); mipC.ellipse((c[2]+0.5)*512/N,(NZ-1-c[0]+0.5)*ey,r*512/N,r*ey,0,0,6.283); mipC.stroke(); }
+  }
+  function dibujarProy(){
+    if(!datos.proy) return;
+    var pr=datos.proy[fase], f=frame, img=prC.createImageData(N,N), off=f*N*N;
+    for(var v=0;v<N;v++){ for(var u=0;u<N;u++){ var g=pr[off+v*N+u], p=((N-1-v)*N+u)*4; img.data[p]=g; img.data[p+1]=g; img.data[p+2]=g; img.data[p+3]=255; } }
+    var tmp=document.createElement('canvas'); tmp.width=N; tmp.height=N; tmp.getContext('2d').putImageData(img,0,0);
+    prC.clearRect(0,0,512,512); prC.drawImage(tmp,0,0,512,512);
+    var ang=meta.fases[fase].angulos_grados[f];
+    $('hud-pr').textContent='proyección '+(f+1)+' · '+ang+'° ('+nombreAngulo(ang)+')';
+    $('angulo-t').textContent=ang+'°';
+  }
+  function nombreAngulo(a){ var d=((a-270)%360+360)%360; if(d<15||d>345)return 'anterior'; if(Math.abs(d-180)<15)return 'posterior'; if(Math.abs(d-90)<15)return 'lateral izquierda'; if(Math.abs(d-270)<15)return 'lateral derecha'; return d<180?'oblicua izquierda':'oblicua derecha'; }
+  function dibujarTodo(){ dibujarAxial(); dibujarMip(); dibujarProy(); }
+  $('corte').addEventListener('input',function(){dibujarAxial();dibujarMip();});
+  $('mezcla').addEventListener('input',dibujarAxial); $('umbral').addEventListener('input',dibujarAxial);
+  $('angulo').addEventListener('input',function(){ frame=parseInt(this.value,10); playing=false; $('play').textContent='Reproducir'; dibujarProy(); });
+  $('play').addEventListener('click',function(){ playing=!playing; this.textContent=playing?'Pausar':'Reproducir'; });
+  $('anterior').addEventListener('click',function(){ var a=meta.fases[fase].angulos_grados, best=0, bd=1e9; for(var i=0;i<a.length;i++){ var d=Math.abs(((a[i]-270)%360+360)%360); d=Math.min(d,360-d); if(d<bd){bd=d;best=i;} } frame=best; $('angulo').value=best; playing=false; $('play').textContent='Reproducir'; dibujarProy(); });
+  $('f-precoz').addEventListener('click',function(){ fase='precoz'; this.className='primary'; $('f-tardia').className=''; dibujarTodo(); });
+  $('f-tardia').addEventListener('click',function(){ fase='tardia'; this.className='primary'; $('f-precoz').className=''; dibujarTodo(); });
+  $('verdad').addEventListener('click',function(){ verdad=!verdad; this.textContent=verdad?'Ocultar la verdad':'Mostrar la verdad'; $('caja-verdad').className='verdad'+(verdad?' on':''); dibujarAxial(); dibujarMip(); });
+  $('caso').addEventListener('change',function(){ cargarCaso(this.value); try{history.replaceState(null,'','#'+this.value);}catch(e){} });
+  function loop(now){ requestAnimationFrame(loop); if(last===null)last=now; if(playing&&datos.proy&&now-last>90){ last=now; frame=(frame+1)%meta.fases[fase].n_proy; $('angulo').value=frame; dibujarProy(); } }
+  requestAnimationFrame(loop);
+  fetch('datos/indice.json').then(function(r){return r.json();}).then(function(ix){
+    indice=ix; var sel=$('caso'); ix.casos.forEach(function(c){ var o=document.createElement('option'); o.value=c.caso; o.textContent=NOMBRES[c.caso]||c.caso; sel.appendChild(o); });
+    var h=(location.hash||'').replace('#',''); var ini=ix.casos.some(function(c){return c.caso===h;})?h:ix.casos[1].caso; sel.value=ini; cargarCaso(ini);
+  }).catch(function(e){ $('hud-ax').textContent='No encontré datos/indice.json'; });
+})();
+</script>
+</body>
+</html>
