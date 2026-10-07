@@ -18,7 +18,14 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUB = 2
 FUENTE = {"tiroides": "TotalSegmentator", "tráquea": "TotalSegmentator (laringe por umbral)", "esófago": "TotalSegmentator",
           "vasos": "TotalSegmentator (carótidas, subclavias, tronco y venas braquiocefálicas)", "hueso": "TotalSegmentator (vértebras, clavículas) + umbral",
-          "pulmón/vía aérea": "TotalSegmentator + umbral", "parótidas": "aproximación por elipsoide", "submaxilares": "aproximación por elipsoide"}
+          "pulmón/vía aérea": "TotalSegmentator + umbral", "parótidas": "aproximación por elipsoide", "submaxilares": "aproximación por elipsoide",
+          "miocardio": "TotalSegmentator (corazón); miocardio aproximado como cáscara de 8 mm", "hígado": "TotalSegmentator"}
+
+
+def grilla():
+    """Matriz y píxel de la adquisición SPECT (los de las proyecciones del caso normal)."""
+    d = np.load(os.path.join(RAIZ, "salida", "casos", "normal", "proyecciones_precoz.npz"))
+    return int(d["matriz"]), float(d["pixel_mm"])
 
 
 def main():
@@ -27,7 +34,7 @@ def main():
     reg = np.load(os.path.join(RAIZ, "salida", "regiones.npz"))["reg"]
     idx = json.load(open(os.path.join(RAIZ, "docs", "datos", "indice.json"), encoding="utf-8"))
     hd = json.load(open(os.path.join(RAIZ, "docs", "datos", "ct_hd.json"), encoding="utf-8"))
-    matriz, pix = 128, 3.3
+    matriz, pix = grilla()
     esc = iso / pix
     forma_z = [int(round(s * esc)) for s in reg.shape]
     desplaz = [(matriz - s) // 2 for s in forma_z]

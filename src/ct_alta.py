@@ -26,7 +26,7 @@ SUB = 4          # sub-píxeles por píxel de la grilla SPECT en la página
 def generar():
     meta = json.load(open(os.path.join(RAIZ, "salida", "fantoma.json"), encoding="utf-8"))
     hu, z, ps, origen, _ = fantoma.leer_ct(meta["ct"])
-    sub, (a, b, y0, y1, x0, x1), _ = fantoma.recortar(hu, z, ps)
+    sub, (a, b, y0, y1, x0, x1), _ = fantoma.recortar(hu, z, ps, meta.get("abajo_mm", 120.0), meta.get("arriba_mm", 70.0))
     assert [a, b, y0, y1, x0, x1] == meta["recorte_indices"], "el recorte no coincide con el del fantoma"
     org = [origen[0] + x0 * ps[1], origen[1] + y0 * ps[0], float(z[a])]
     dz = float(np.median(np.diff(z[a:b])))
@@ -35,12 +35,18 @@ def generar():
     return np.round(sub).astype(np.int16), org, (dz, ps[0], ps[1]), meta
 
 
+def grilla():
+    """Matriz y píxel de la adquisición SPECT (los de las proyecciones del caso normal)."""
+    d = np.load(os.path.join(RAIZ, "salida", "casos", "normal", "proyecciones_precoz.npz"))
+    return int(d["matriz"]), float(d["pixel_mm"])
+
+
 def para_web(sub, org, esp, meta):
     """Muestrea el CT original en los cortes de la grilla SPECT de la página (misma correspondencia que exportar_web)."""
     f = np.load(os.path.join(RAIZ, "salida", "fantoma.npz"))
     iso = float(f["iso"])
     forma_f = f["hu"].shape
-    matriz, pix = 128, 3.3
+    matriz, pix = grilla()
     esc = iso / pix
     forma_z = [int(round(s * esc)) for s in forma_f]
     desplaz = [(matriz - s) // 2 for s in forma_z]

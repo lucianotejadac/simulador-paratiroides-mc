@@ -74,7 +74,7 @@ def recortar(hu, z, ps, abajo_mm=120.0, arriba_mm=70.0):
 
 def remuestrear(vol, dz, ps, iso=2.0):
     factores = (dz / iso, ps[0] / iso, ps[1] / iso)
-    return ndimage.zoom(vol, factores, order=1).astype(np.float32)
+    return ndimage.zoom(vol, factores, order=1, mode="nearest").astype(np.float32)   # mode="nearest": sin pared de 0 HU en el borde (BITACORA 0004)
 
 
 def montaje(hu, iso, ruta):
@@ -101,7 +101,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ct", default=CT_POR_DEFECTO)
     ap.add_argument("--iso", type=float, default=2.0, help="mm por vóxel, isotrópico")
-    ap.add_argument("--abajo", type=float, default=120.0, help="mm bajo el mínimo del cuello")
+    ap.add_argument("--abajo", type=float, default=300.0, help="mm bajo el mínimo del cuello (300: hasta bajo el corazón)")
     ap.add_argument("--arriba", type=float, default=70.0, help="mm sobre el mínimo del cuello")
     ap.add_argument("--salida", default=os.path.join(RAIZ, "salida"))
     a = ap.parse_args()
@@ -114,7 +114,7 @@ def main():
     origen_rec = [origen[0] + x0 * ps[1], origen[1] + y0 * ps[0], z[i_a]]
     meta = {"ct": a.ct, "paciente": str(getattr(cortes[0], "PatientID", "")), "iso_mm": a.iso, "forma_zyx": list(iso.shape),
             "origen_mm": origen_rec, "recorte_indices": [int(v) for v in (i_a, i_b, y0, y1, x0, x1)], "z_cuello_mm": float(z[i_cuello]),
-            "ct_espaciado_mm": [dz, ps[0], ps[1]], "ct_cortes": len(z), "mu_agua_140": MU_AGUA_140,
+            "ct_espaciado_mm": [dz, ps[0], ps[1]], "abajo_mm": a.abajo, "arriba_mm": a.arriba, "ct_cortes": len(z), "mu_agua_140": MU_AGUA_140,
             "study_uid": str(getattr(cortes[0], "StudyInstanceUID", "")), "frame_uid": str(getattr(cortes[0], "FrameOfReferenceUID", "")),
             "sexo": str(getattr(cortes[0], "PatientSex", "")), "edad": str(getattr(cortes[0], "PatientAge", ""))}
     np.savez_compressed(os.path.join(a.salida, "fantoma.npz"), hu=np.round(iso).astype(np.int16), mu=mu,

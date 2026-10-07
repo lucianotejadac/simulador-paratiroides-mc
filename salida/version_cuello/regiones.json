@@ -1,0 +1,31 @@
+{
+  "volumen_ml": {
+    "aire": 18935.7,
+    "tejido blando": 4417.6,
+    "hueso": 667.7,
+    "pulmón/vía aérea": 184.3,
+    "tiroides": 13.2,
+    "parótidas": 20.9,
+    "submaxilares": 11.7,
+    "tráquea": 53.2,
+    "esófago": 7.1,
+    "vasos": 18.8
+  },
+  "nombres": [
+    "aire",
+    "tejido blando",
+    "hueso",
+    "pulmón/vía aérea",
+    "tiroides",
+    "parótidas",
+    "submaxilares",
+    "tráquea",
+    "esófago",
+    "vasos"
+  ],
+  "fuente": "TotalSegmentator 2 (total, roi_subset) + umbral para lo no cubierto",
+  "tiroides_cortes": [
+    7,
+    30
+  ]
+}

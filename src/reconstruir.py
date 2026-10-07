@@ -4,7 +4,7 @@ Proyector: rotación del volumen con interpolación bilineal (scipy.ndimage.rota
 eje perpendicular al detector; opcionalmente con corrección de atenuación (mapa mu del fantoma,
 remuestreado a la grilla de reconstrucción) y con una PSF gaussiana fija (resolución al radio medio).
 No es el proyector del Monte Carlo: es el que un equipo clínico usaría, con sus simplificaciones.
-Grilla de reconstrucción: matriz × matriz × matriz con el píxel de adquisición (3.3 mm).
+Grilla de reconstrucción: matriz × matriz × matriz con el píxel de adquisición.
 """
 from __future__ import annotations
 

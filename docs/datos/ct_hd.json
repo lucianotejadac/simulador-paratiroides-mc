@@ -1,1 +1,1 @@
-{"nz": 58, "lado": 512, "sub": 4, "recorte_yx": [111, 0, 294, 512], "codificacion": "uint16, HU + 1024", "pixel_mm": 0.825, "fuente": "CT original del tomógrafo (0.98 mm en el plano, 3.27 mm entre cortes), interpolación lineal"}
+{"nz": 78, "lado": 512, "sub": 4, "recorte_yx": [149, 47, 217, 413], "codificacion": "uint16, HU + 1024", "pixel_mm": 1.2, "fuente": "CT original del tomógrafo (0.98 mm en el plano, 3.27 mm entre cortes), interpolación lineal"}

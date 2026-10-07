@@ -23,11 +23,17 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CASOS = ["normal", "inferior-derecho-12", "inferior-izquierdo-8", "retroesofagico-10", "mediastinico-15"]
 
 
+def grilla():
+    """Matriz y píxel de la adquisición SPECT (los de las proyecciones del caso normal)."""
+    d = np.load(os.path.join(RAIZ, "salida", "casos", "normal", "proyecciones_precoz.npz"))
+    return int(d["matriz"]), float(d["pixel_mm"])
+
+
 def main():
     f = np.load(os.path.join(RAIZ, "salida", "fantoma.npz"))
     meta_f = json.load(open(os.path.join(RAIZ, "salida", "fantoma.json"), encoding="utf-8"))
     hu, iso = f["hu"].astype(np.float32), float(f["iso"])
-    matriz, pix_mm = 128, 3.3
+    matriz, pix_mm = grilla()
     # CT en la grilla del SPECT (misma convención que la corrección de atenuación y que el DICOM NM)
     ct_g = mu_en_grilla(hu + 1000.0, iso, matriz, pix_mm) - 1000.0     # el relleno fuera del fantoma queda en -1000 HU
     ocupado = np.nonzero((ct_g > -900).any(axis=(1, 2)))[0]
@@ -60,13 +66,26 @@ def main():
             pr = d["ruido"].astype(np.float32)
             tp = float(np.percentile(pr, 99.8)) or 1.0
             np.clip(pr / tp * 255.0, 0, 255).astype(np.uint8).tofile(os.path.join(destino, f"proy_{fase}.bin"))
-            meta["fases"][fase] = {"n_proy": int(pr.shape[0]), "angulos_grados": [round(float(np.degrees(a)), 1) for a in d["angulos_rad"]],
+            ruta_p = os.path.join(carpeta, f"planar_{fase}.npz")
+            planar = None
+            if os.path.exists(ruta_p):
+                pl = np.load(ruta_p)["ruido"].astype(np.float32)
+                np.clip(pl / (float(np.percentile(pl, 99.7)) or 1.0) * 255.0, 0, 255).astype(np.uint8).tofile(os.path.join(destino, f"planar_{fase}.bin"))
+                planar = {"matriz": int(pl.shape[0]), "pixel_mm": float(np.load(ruta_p)["pixel_mm"]), "cuentas": int(pl.sum()),
+                          "tiempo_s": float(np.load(ruta_p)["tiempo_s"]), "max_pixel": int(pl.max())}
+            meta["fases"][fase] = {"planar": planar, "n_proy": int(pr.shape[0]), "angulos_grados": [round(float(np.degrees(a)), 1) for a in d["angulos_rad"]],
                                    "cuentas_por_proyeccion": int(round(pr.sum(axis=(1, 2)).mean())), "max_pixel": int(pr.max()),
                                    "actividad_MBq": round(adq["fases"][fase]["actividad_MBq"], 1), "segundos_mc": adq["fases"][fase]["segundos"]}
         if verdad["adenoma"]:
             a = verdad["adenoma"]
             meta["adenoma"] = {"sitio": a["sitio"], "diametro_mm": a["diametro_mm"], "relacion": a["relacion"], "volumen_ml": round(a["volumen_ml"], 2),
                                "centro_grilla_zyx": [round(v, 2) for v in a_grilla(a["centro_voxel_zyx"])]}
+            # posición en la planar anterior (misma geometría que el Monte Carlo: u = x - centro, v = z - centro)
+            c = a["centro_voxel_zyx"]
+            pl_pix = 2.4
+            u = ((c[2] + 0.5) * iso - hu.shape[2] * iso / 2.0) / pl_pix + 128
+            v = ((c[0] + 0.5) * iso - hu.shape[0] * iso / 2.0) / pl_pix + 128
+            meta["adenoma"]["planar_uv"] = [round(u, 1), round(v, 1)]
         json.dump(meta, open(os.path.join(destino, "meta.json"), "w", encoding="utf-8"), ensure_ascii=False)
         # zip de los DICOM
         dic = os.path.join(RAIZ, "salida", "dicom", caso)

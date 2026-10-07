@@ -1,11 +1,12 @@
 {
   "caso": "inferior-derecho-12",
+  "radio_auto_cm": 27.3,
   "camara": {
     "angulos": 60,
     "arco_grados": 360.0,
-    "radio_cm": 20.0,
+    "radio_cm": 27.3,
     "matriz": 128,
-    "pixel_mm": 3.3,
+    "pixel_mm": 4.8,
     "tiempo_s": 25.0,
     "colimador": "LEHR",
     "ventana_keV": [
@@ -16,26 +17,52 @@
     "fwhm_intrinseca_mm": 3.8,
     "g_geom": 0.00011710467265454331
   },
-  "historias": 2000000,
+  "historias": 4000000,
   "semilla": 1,
   "fases": {
     "precoz": {
-      "historias": 2000000,
-      "fotoelectricos": 53537,
-      "compton": 1957474,
-      "emitidos_por_proyeccion": 480049509.8000002,
-      "actividad_MBq": 21.599528000000007,
-      "cuentas_medias_por_proyeccion": 22698.966130078657,
-      "segundos": 63.0
+      "historias": 4000000,
+      "fotoelectricos": 113578,
+      "compton": 5085870,
+      "emitidos_por_proyeccion": 2063136971.000001,
+      "actividad_MBq": 92.82956000000003,
+      "cuentas_medias_por_proyeccion": 85069.67409309947,
+      "segundos": 131.2,
+      "planar": {
+        "historias": 4000000,
+        "fotoelectricos": 113999,
+        "compton": 5079859,
+        "emitidos_por_proyeccion": 24757643652.00001,
+        "actividad_MBq": 92.82956000000003,
+        "cuentas_medias_por_proyeccion": 1285289.0205802305,
+        "segundos": 2.6,
+        "radio_cm": 13.6,
+        "matriz": 256,
+        "pixel_mm": 2.4,
+        "tiempo_s": 300.0
+      }
     },
     "tardia": {
-      "historias": 2000000,
-      "fotoelectricos": 53585,
-      "compton": 1958682,
-      "emitidos_por_proyeccion": 298671658.27767277,
-      "actividad_MBq": 13.438544804394725,
-      "cuentas_medias_por_proyeccion": 14111.788309085909,
-      "segundos": 62.4
+      "historias": 4000000,
+      "fotoelectricos": 114744,
+      "compton": 5134852,
+      "emitidos_por_proyeccion": 1286995647.4911652,
+      "actividad_MBq": 57.90756569139101,
+      "cuentas_medias_por_proyeccion": 53290.18710087177,
+      "segundos": 133.7,
+      "planar": {
+        "historias": 4000000,
+        "fotoelectricos": 114140,
+        "compton": 5135671,
+        "emitidos_por_proyeccion": 15443947769.89398,
+        "actividad_MBq": 57.90756569139101,
+        "cuentas_medias_por_proyeccion": 805182.5175952872,
+        "segundos": 2.8,
+        "radio_cm": 13.6,
+        "matriz": 256,
+        "pixel_mm": 2.4,
+        "tiempo_s": 300.0
+      }
     }
   }
 }

@@ -4,22 +4,22 @@
     "diametro_mm": 8,
     "relacion": 2.0,
     "centro_voxel_zyx": [
-      6.0,
-      55.0,
+      97.0,
+      56.0,
       128.0
     ],
     "centro_mm_zyx": [
-      12.0,
-      110.0,
+      194.0,
+      112.0,
       256.0
     ],
     "volumen_ml": 0.264,
     "objetivo_voxel_zyx": [
-      8.0,
+      98.0,
       55.0,
-      127.8923076923077
+      129.2204724409449
     ],
-    "desvio_del_objetivo_mm": 4.0057946193663465,
+    "desvio_del_objetivo_mm": 3.7360690459925787,
     "concentracion_kbq_ml": [
       80.0,
       64.0
@@ -27,8 +27,8 @@
   },
   "caso": "inferior-izquierdo-8",
   "actividad_total_MBq": [
-    21.525129318237305,
-    13.378525733947754
+    92.75516510009766,
+    57.8475341796875
   ],
   "concentraciones_kbq_ml": {
     "0": [
@@ -70,6 +70,14 @@
     "9": [
       6.0,
       3.0
+    ],
+    "10": [
+      60.0,
+      45.0
+    ],
+    "11": [
+      50.0,
+      20.0
     ]
   },
   "retencion_adenoma": 0.8

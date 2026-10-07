@@ -47,7 +47,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 <body>
 <div class="wrap">
   <header><h1>Cintigrafía de paratiroides simulada</h1><span class="tag">SPECT con Tc-99m sestamibi · Monte Carlo sobre un CT real · verdad conocida</span></header>
-  <p class="note">Cinco estudios SPECT sobre el mismo cuello (CT público de TCIA), con la física real de la adquisición: atenuación, dispersión Compton, colimador LEHR, ventana de energía y ruido de Poisson. En cuatro hay un adenoma paratiroideo de tamaño, sitio y captación elegidos. Mira el estudio, decide dónde está, y recién entonces pide la verdad.</p>
+  <p class="note">Cinco estudios SPECT de cuello y mediastino hasta el corazón, con panorámicas anteriores, sobre el mismo paciente (CT público de TCIA), con la física real de la adquisición: atenuación, dispersión Compton, colimador LEHR, ventana de energía y ruido de Poisson. En cuatro hay un adenoma paratiroideo de tamaño, sitio y captación elegidos. Mira el estudio, decide dónde está, y recién entonces pide la verdad.</p>
   <div class="bar">
     <span class="lbl">Caso</span><select id="caso" aria-label="Caso"></select>
     <span class="lbl">Fase</span>
@@ -71,20 +71,27 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <table><thead><tr><th>parámetro</th><th class="n">precoz</th><th class="n">tardía</th></tr></thead><tbody id="tabla"></tbody></table>
     </div>
   </div>
+  <div class="card"><h2>Panorámicas anteriores de cuello y tórax <small>planar estática · 256 × 256 · 5 min · LEHR</small></h2>
+    <div class="grid" style="gap:12px">
+      <div class="stage"><canvas id="pl-precoz" width="512" height="512"></canvas><div class="hud">precoz (15 min) · D ← → I</div></div>
+      <div class="stage"><canvas id="pl-tardia" width="512" height="512"></canvas><div class="hud">tardía (2 h) · D ← → I</div></div>
+    </div>
+    <div class="fila"><span class="lbl">Brillo</span><input type="range" id="brillo" min="30" max="200" value="100" aria-label="Brillo de las panorámicas"><span class="t" id="pl-info"></span></div>
+  </div>
   <footer>El CT es el caso 2 de la entrega docente de PET/CT de The Cancer Imaging Archive (anónimo, desidentificado según DICOM PS 3.15); la tiroides, la tráquea, el esófago, los vasos y las vértebras se contornearon sobre él con TotalSegmentator (Wasserthal y otros, 2023), las glándulas salivales se aproximaron con elipsoides (contornos marcados «aprox.»), y la biodistribución del sestamibi se asignó por región. Cada adenoma ocupa solo tejido blando libre, sin tocar tiroides, esófago, vasos ni hueso. Cada fotón de 140 keV se siguió por el cuello hasta el colimador con el método de Woodcock, con interacciones fotoeléctrica y Compton y detección forzada hacia los 60 ángulos. Reconstrucción OSEM de 4 iteraciones y 6 subconjuntos con corrección de atenuación por el CT. Motor validado contra la sensibilidad y la resolución de una LEHR y contra la atenuación y dispersión en agua. Los DICOM descargables (CT, SPECT reconstruido y proyecciones crudas) abren en <a href="https://lucianotejadac.github.io/visor_dicom/">visor_dicom</a> y en MicroDicom, fusionables. Código, pruebas y bitácora en <a href="https://github.com/lucianotejadac/simulador-paratiroides-mc">github.com/lucianotejadac/simulador-paratiroides-mc</a> (MIT). Otros simuladores en <a href="https://lucianotejadac.github.io/">lucianotejadac.github.io</a>.</footer>
 </div>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id);};
   var NOMBRES={"normal":"Caso A","inferior-derecho-12":"Caso B","inferior-izquierdo-8":"Caso C","retroesofagico-10":"Caso D","mediastinico-15":"Caso E"};
-  var SITIOS={"inferior-derecho":"surco traqueoesofágico derecho, bajo el polo inferior del lóbulo","inferior-izquierdo":"junto al polo inferior del lóbulo izquierdo, lateral a la tráquea","retroesofagico":"ectópico retroesofágico (posterolateral izquierdo al esófago, prevertebral)","mediastinico":"ectópico en el mediastino superior anterior, a nivel de la escotadura esternal"};
+  var SITIOS={"inferior-derecho":"surco traqueoesofágico derecho, bajo el polo inferior del lóbulo","inferior-izquierdo":"junto al polo inferior del lóbulo izquierdo, lateral a la tráquea","retroesofagico":"posición ectópica retroesofágica, posterolateral izquierda al esófago y prevertebral","mediastinico":"posición ectópica en el mediastino superior anterior, retroesternal y prevascular (sitio tímico)"};
   var indice=null, meta=null, datos={}, caso=null, fase='precoz', verdad=false, playing=true, frame=45, last=null;
   var axC=$('ax').getContext('2d'), prC=$('pr').getContext('2d'), mipC=$('mip').getContext('2d');
   var N=128, NZ=58;
   var ctHD=null, ctInfo=null, ventana={c:40,w:400};
   var ctListo=fetch('datos/ct_hd.json').then(function(r){return r.json();}).then(function(j){ ctInfo=j; return fetch('datos/ct_hd.bin'); })
     .then(function(r){ if(!r.ok) throw new Error('ct_hd.bin'); return r.arrayBuffer(); }).then(function(b){ ctHD=new Uint16Array(b); return true; });
-  var CONT=[{e:4,n:'Tiroides',c:[255,90,90],on:true},{e:8,n:'Esófago',c:[80,220,120],on:true},{e:7,n:'Tráquea',c:[255,230,0],on:true},{e:9,n:'Vasos',c:[230,70,230],on:true},
+  var CONT=[{e:4,n:'Tiroides',c:[255,90,90],on:true},{e:10,n:'Miocardio (aprox.)',c:[255,160,40],on:true},{e:11,n:'Hígado',c:[160,110,60],on:false},{e:8,n:'Esófago',c:[80,220,120],on:true},{e:7,n:'Tráquea',c:[255,230,0],on:true},{e:9,n:'Vasos',c:[230,70,230],on:true},
               {e:5,n:'Parótidas (aprox.)',c:[80,200,255],on:false},{e:6,n:'Submaxilares (aprox.)',c:[80,200,255],on:false},{e:2,n:'Hueso',c:[210,210,210],on:false},{e:3,n:'Pulmón y vía aérea',c:[110,140,255],on:false}];
   var contInfo=null, contEt=null, lienzoCont=document.createElement('canvas'), contClave='';
   fetch('datos/contornos.json').then(function(r){return r.json();}).then(function(j){ contInfo=j; return fetch('datos/contornos.bin'); }).then(function(r){return r.arrayBuffer();})
@@ -110,8 +117,8 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   function cargarCaso(c){
     caso=c; datos={}; $('zip').href='dicom/'+c+'.zip';
     var base='datos/'+c+'/';
-    Promise.all([fetch(base+'meta.json').then(function(r){return r.json();}), ctListo, cargarBin(base+'nm_precoz.bin'), cargarBin(base+'nm_tardia.bin'), cargarBin(base+'proy_precoz.bin'), cargarBin(base+'proy_tardia.bin')])
-      .then(function(r){ meta=r[0]; NZ=meta.nz; N=meta.matriz; datos={ct:true,nm:{precoz:r[2],tardia:r[3]},proy:{precoz:r[4],tardia:r[5]}}; $('corte').max=NZ-1; $('angulo').max=meta.fases.precoz.n_proy-1; verdad=false; $('verdad').textContent='Mostrar la verdad'; tabla(); dibujarTodo(); })
+    Promise.all([fetch(base+'meta.json').then(function(r){return r.json();}), ctListo, cargarBin(base+'nm_precoz.bin'), cargarBin(base+'nm_tardia.bin'), cargarBin(base+'proy_precoz.bin'), cargarBin(base+'proy_tardia.bin'), cargarBin(base+'planar_precoz.bin').catch(function(){return null;}), cargarBin(base+'planar_tardia.bin').catch(function(){return null;})])
+      .then(function(r){ meta=r[0]; NZ=meta.nz; N=meta.matriz; datos={ct:true,nm:{precoz:r[2],tardia:r[3]},proy:{precoz:r[4],tardia:r[5]},planar:{precoz:r[6],tardia:r[7]}}; $('corte').max=NZ-1; $('angulo').max=meta.fases.precoz.n_proy-1; verdad=false; $('verdad').textContent='Mostrar la verdad'; tabla(); dibujarTodo(); })
       .catch(function(e){ $('hud-ax').textContent='No pude cargar '+e.message; });
   }
   function tabla(){
@@ -168,7 +175,17 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     $('angulo-t').textContent=ang+'°';
   }
   function nombreAngulo(a){ var d=((a-270)%360+360)%360; if(d<15||d>345)return 'anterior'; if(Math.abs(d-180)<15)return 'posterior'; if(Math.abs(d-90)<15)return 'lateral izquierda'; if(Math.abs(d-270)<15)return 'lateral derecha'; return d<180?'oblicua izquierda':'oblicua derecha'; }
-  function dibujarTodo(){ dibujarAxial(); dibujarMip(); dibujarProy(); }
+  function dibujarPlanar(){
+    if(!datos.planar) return; var b=$('brillo').value/100;
+    ['precoz','tardia'].forEach(function(f){ var c=$('pl-'+f), ctx=c.getContext('2d'), pl=datos.planar[f]; ctx.fillStyle='#000'; ctx.fillRect(0,0,512,512); if(!pl) return;
+      var M=Math.round(Math.sqrt(pl.length)), img=ctx.createImageData(M,M);
+      for(var v=0;v<M;v++){ for(var u=0;u<M;u++){ var g=Math.min(255,pl[v*M+u]*b), p=((M-1-v)*M+u)*4; img.data[p]=g; img.data[p+1]=g; img.data[p+2]=g; img.data[p+3]=255; } }
+      var t=document.createElement('canvas'); t.width=M; t.height=M; t.getContext('2d').putImageData(img,0,0); ctx.imageSmoothingEnabled=true; ctx.drawImage(t,0,0,512,512);
+      if(verdad&&meta.adenoma&&meta.adenoma.planar_uv){ var uv=meta.adenoma.planar_uv, e=512/M, r=(meta.adenoma.diametro_mm/2/2.4+3)*e; ctx.strokeStyle='#4df0c8'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc((uv[0]+0.5)*e,(M-1-uv[1]+0.5)*e,r,0,6.283); ctx.stroke(); } });
+    var p=meta.fases.precoz.planar, t2=meta.fases.tardia.planar; if(p&&t2) $('pl-info').textContent=(p.cuentas/1000).toFixed(0)+' k / '+(t2.cuentas/1000).toFixed(0)+' k cuentas';
+  }
+  $('brillo').addEventListener('input',dibujarPlanar);
+  function dibujarTodo(){ dibujarAxial(); dibujarMip(); dibujarProy(); dibujarPlanar(); }
   $('corte').addEventListener('input',function(){dibujarAxial();dibujarMip();});
   function ventanaCT(c,w,id){ ventana={c:c,w:w}; ['v-blando','v-hueso'].forEach(function(b){ $(b).className=(b===id)?'primary':''; }); dibujarAxial(); }
   $('v-blando').addEventListener('click',function(){ ventanaCT(40,400,'v-blando'); });
@@ -180,7 +197,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   $('anterior').addEventListener('click',function(){ var a=meta.fases[fase].angulos_grados, best=0, bd=1e9; for(var i=0;i<a.length;i++){ var d=Math.abs(((a[i]-270)%360+360)%360); d=Math.min(d,360-d); if(d<bd){bd=d;best=i;} } frame=best; $('angulo').value=best; playing=false; $('play').textContent='Reproducir'; dibujarProy(); });
   $('f-precoz').addEventListener('click',function(){ fase='precoz'; this.className='primary'; $('f-tardia').className=''; dibujarTodo(); });
   $('f-tardia').addEventListener('click',function(){ fase='tardia'; this.className='primary'; $('f-precoz').className=''; dibujarTodo(); });
-  $('verdad').addEventListener('click',function(){ verdad=!verdad; this.textContent=verdad?'Ocultar la verdad':'Mostrar la verdad'; $('caja-verdad').className='verdad'+(verdad?' on':''); dibujarAxial(); dibujarMip(); });
+  $('verdad').addEventListener('click',function(){ verdad=!verdad; this.textContent=verdad?'Ocultar la verdad':'Mostrar la verdad'; $('caja-verdad').className='verdad'+(verdad?' on':''); dibujarAxial(); dibujarMip(); dibujarPlanar(); });
   $('caso').addEventListener('change',function(){ cargarCaso(this.value); try{history.replaceState(null,'','#'+this.value);}catch(e){} });
   function loop(now){ requestAnimationFrame(loop); if(last===null)last=now; if(playing&&datos.proy&&now-last>90){ last=now; frame=(frame+1)%meta.fases[fase].n_proy; $('angulo').value=frame; dibujarProy(); } }
   requestAnimationFrame(loop);

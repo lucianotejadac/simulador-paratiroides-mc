@@ -16,8 +16,8 @@ import numpy as np
 from scipy import ndimage
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS = range(10)
-NOMBRES = ["aire", "tejido blando", "hueso", "pulmón/vía aérea", "tiroides", "parótidas", "submaxilares", "tráquea", "esófago", "vasos"]
+AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS, MIOCARDIO, HIGADO = range(12)
+NOMBRES = ["aire", "tejido blando", "hueso", "pulmón/vía aérea", "tiroides", "parótidas", "submaxilares", "tráquea", "esófago", "vasos", "miocardio", "hígado"]
 
 
 def traquea_por_corte(hu, cuerpo):
@@ -143,6 +143,7 @@ def main():
     k_t = int(zt.mean()) if len(zt) else z_cuello_idx - int(60 / iso)
     ks = montaje(hu, reg, os.path.join(RAIZ, "salida", "regiones.png"), k_t)
     np.savez_compressed(os.path.join(RAIZ, "salida", "regiones.npz"), reg=reg)
+    np.savez_compressed(os.path.join(RAIZ, "salida", "regiones_umbral.npz"), reg=reg)   # base para regiones_totalseg.py
     json.dump({"volumen_ml": vol_ml, "nombres": NOMBRES, "z_cuello_idx": z_cuello_idx, "cortes_montaje": [int(k) for k in ks],
                "tiroides_cortes": [int(zt.min()), int(zt.max())] if len(zt) else None,
                "traquea_cortes": [min(centros), max(centros)] if centros else None},

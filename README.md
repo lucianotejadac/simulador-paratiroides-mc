@@ -1,6 +1,6 @@
 # Simulador Monte Carlo de cintigrafía de paratiroides
 
-Genera una adquisición SPECT de paratiroides con Tc-99m sestamibi, con la física real (atenuación,
+Genera una adquisición SPECT de paratiroides con Tc-99m sestamibi, de cuello y mediastino hasta el corazón, con panorámicas anteriores, con la física real (atenuación,
 dispersión Compton, colimador, resolución y ruido de Poisson), a partir de los cortes axiales de un CT.
 El CT da el mapa de atenuación; la biodistribución del radiofármaco se construye sobre su segmentación
 y el adenoma se coloca a voluntad, así que cada estudio simulado tiene la verdad conocida.
@@ -29,6 +29,7 @@ CT (TCIA, público) ──► fantoma.py ──► mu(140 keV) a 2 mm ──► 
 python -m venv .venv && .venv/Scripts/pip install numpy pydicom numba==0.61.2 pillow scipy pytest
 python src/fantoma.py            # lee el CT, recorta el cuello, remuestrea, HU -> mu
 python src/segmentar.py          # regiones por umbral (hueso, vía aérea, salivales)
+python src/totalseg.py           # TotalSegmentator en CPU: cuello y tórax
 TotalSegmentator -i salida/totalseg/cuello_ct.nii.gz -o salida/totalseg/total.nii.gz --ml -d cpu --roi_subset thyroid_gland esophagus trachea ...
 python src/comparar_totalseg.py  # compara y guarda las etiquetas en la grilla del fantoma
 python src/regiones_totalseg.py  # tiroides, tráquea, esófago y vasos de TotalSegmentator

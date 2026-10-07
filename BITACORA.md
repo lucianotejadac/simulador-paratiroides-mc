@@ -156,3 +156,39 @@ de 2 mm), 2.2 MB. El visor dibuja el borde de cada estructura sobre el CT con un
 estructura: tiroides, esófago, tráquea y vasos encendidos; salivales (marcadas «aprox.», son
 elipsoides), hueso y pulmón apagados. Revisados a ojo en un corte medio tiroideo: lóbulos alrededor de
 la tráquea, esófago posterior y carótidas laterales.
+
+---
+
+## 0004 · 2026-10-07 · Hasta el corazón, con panorámicas anteriores
+
+**Pedido.** Que el estudio llegue hasta el corazón, como la panorámica clínica de cuello y tórax.
+
+**Decisiones.**
+- Fantoma de la mandíbula a bajo el corazón: 37 × 28 × 50 cm a 2 mm (186 × 140 × 250), con los
+  brazos a los lados. El fantoma de cuello anterior queda en `salida/version_cuello/`.
+- TotalSegmentator ampliado (`src/totalseg.py`): corazón, aorta, vena cava superior, venas
+  pulmonares, cinco lóbulos pulmonares, hígado, esternón, costillas, escápulas y húmeros. 4 min 51 s
+  en CPU. La tiroides volvió a medir 13.2 mL, idéntica a la del fantoma corto: la red es estable al
+  cambiar el campo.
+- Miocardio: TotalSegmentator da el corazón entero y en CT sin contraste las paredes no se separan
+  de las cavidades. Se aproxima como una cáscara de 8 mm del contorno cardíaco (314 mL) con el
+  interior como pool sanguíneo. Sobreestima la pared del ventrículo derecho y de las aurículas;
+  basta para una panorámica, no para perfusión.
+- Sestamibi agregado (kBq/mL, precoz/tardía): miocardio 60/45, hígado 50/20, pool sanguíneo 6/3.
+  En el campo hay ahora unos 93 MBq en la fase precoz (antes 21.5 solo en el cuello).
+- Adenoma mediastínico: a 3.5 cm bajo el polo tiroideo, delante de la tráquea, están los troncos
+  braquiocefálicos y el arco aórtico, sin 15 mm libres. Se llevó al espacio prevascular
+  retroesternal, el sitio típico del adenoma ectópico tímico (a 24 mm del objetivo inicial, sin
+  tocar vasos ni esternón).
+- Adquisición: 128 × 128 sin zoom (4.8 mm, 61 cm de campo) porque los hombros no caben en 42 cm;
+  radio de órbita calculado del contorno del cuerpo + 2 cm (antes fijo en 20 cm). 4 millones de
+  historias por fase.
+- Panorámica anterior por fase: 256 × 256 de 2.4 mm, 5 minutos, colimador a 1 cm del punto más
+  anterior del cuerpo. Una sola proyección: 4 millones de historias en unos segundos. DICOM NM
+  estática (`PANORAMICA_<fase>.dcm`, vista anterior) y panel en la página con la verdad marcada.
+
+**Trampa.** Al remuestrear un recorte más ancho, `ndimage.zoom` con el modo de borde por defecto
+(constante 0) puso en la última columna una pared de 0 HU, es decir agua, de toda la altura y el
+fondo del fantoma: 26 040 vóxeles de tejido blando con actividad, visibles como una línea vertical en
+la panorámica de prueba. Corregido con `mode="nearest"`. El fantoma de cuello publicado antes no
+tenía la pared (se verificó), porque su borde caía en aire.

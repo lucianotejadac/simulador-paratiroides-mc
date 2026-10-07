@@ -182,6 +182,30 @@ def exportar_proyecciones(proy: np.ndarray, pix_mm: float, angulos_rad: np.ndarr
     ds.save_as(ruta, enforce_file_format=True)
 
 
+def exportar_planar(img: np.ndarray, pix_mm: float, tiempo_s: float, meta: dict, caso: str, fase: str, uids: dict, ruta: str):
+    """Imagen planar anterior (panorámica de cuello y tórax), NM estática de un cuadro."""
+    filas, cols = img.shape
+    ds = _archivo("1.2.840.10008.5.1.4.1.1.20", RAIZ_UID + f"5.{uids['semilla']}.{1 if fase == 'precoz' else 2}")
+    _base(ds, meta, caso, "NM", uids, 7 if fase == "precoz" else 8, f"PANORAMICA {fase.upper()}")
+    ds.ImageType = ["ORIGINAL", "PRIMARY", "STATIC", "EMISSION"]
+    ds.InstanceNumber = 1
+    _nm_comun(ds, filas, cols, 1, pix_mm)
+    ds.FrameIncrementPointer = (0x0054, 0x0010)          # Energy Window Vector
+    ds.EnergyWindowVector = [1]
+    ds.DetectorVector = [1]
+    ds.ActualFrameDuration = str(int(tiempo_s * 1000))
+    ds.PatientOrientation = ["L", "F"]                  # vista anterior: columnas hacia la izquierda del paciente, filas hacia los pies
+    vista = Dataset()
+    vista.CodeValue, vista.CodingSchemeDesignator, vista.CodeMeaning = "R-10206", "SRT", "anterior"
+    ds.ViewCodeSequence = Sequence([vista])
+    det = Dataset()
+    det.CollimatorGridName, det.CollimatorType = "LEHR", "PARA"
+    ds.DetectorInformationSequence = Sequence([det])
+    ds.RescaleIntercept, ds.RescaleSlope = "0", "1"
+    ds.PixelData = np.ascontiguousarray(np.clip(img, 0, 65535).astype(np.uint16)).tobytes()
+    ds.save_as(ruta, enforce_file_format=True)
+
+
 def volumen_a_lps(vol: np.ndarray, pix_mm: float, fantoma_meta: dict, fantoma_forma, iso: float):
     """El volumen reconstruido (matriz³ a pix_mm, centrado en el centro del fantoma) -> origen LPS de su vóxel (0,0,0).
     Convención del reconstructor: eje y del volumen = eje u del detector; con el detector en phi=0 mirando desde +x."""
@@ -208,6 +232,7 @@ def main():
     for fase in ("precoz", "tardia"):
         uids[f"serie_SPECT {fase.upper()} RECON AC"] = RAIZ_UID + f"1.{a.numero}.{4 if fase == 'precoz' else 5}"
         uids[f"serie_SPECT {fase.upper()} PROYECCIONES"] = RAIZ_UID + f"1.{a.numero}.{6 if fase == 'precoz' else 7}"
+        uids[f"serie_PANORAMICA {fase.upper()}"] = RAIZ_UID + f"1.{a.numero}.{8 if fase == 'precoz' else 9}"
     ruta_alta = os.path.join(RAIZ, "salida", "ct_alta.npz")
     if os.path.exists(ruta_alta):                       # CT en la resolución original del tomógrafo
         c = np.load(ruta_alta)
@@ -219,6 +244,10 @@ def main():
         d = np.load(os.path.join(carpeta_caso, f"proyecciones_{fase}.npz"))
         pix_mm = float(d["pixel_mm"])
         exportar_proyecciones(d["ruido"], pix_mm, d["angulos_rad"], float(d["radio_cm"]), 25.0, meta, a.caso, fase, uids, os.path.join(salida, f"PROY_{fase}.dcm"))
+        ruta_pl = os.path.join(carpeta_caso, f"planar_{fase}.npz")
+        if os.path.exists(ruta_pl):
+            pl = np.load(ruta_pl)
+            exportar_planar(pl["ruido"][::-1], float(pl["pixel_mm"]), float(pl["tiempo_s"]), meta, a.caso, fase, uids, os.path.join(salida, f"PANORAMICA_{fase}.dcm"))
         ruta_rec = os.path.join(carpeta_caso, f"recon_{fase}_ac.npy")
         if os.path.exists(ruta_rec):
             vol = np.load(ruta_rec)

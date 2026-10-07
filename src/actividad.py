@@ -16,14 +16,15 @@ import numpy as np
 
 from scipy import ndimage
 
-from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS
+from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS, MIOCARDIO, HIGADO
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # kBq/mL por región: (precoz, tardía)
 CONCENTRACION = {AIRE: (0.0, 0.0), BLANDO: (4.0, 2.5), HUESO: (3.0, 2.0), PULMON: (1.0, 0.6), TIROIDES: (40.0, 16.0),
                  PAROTIDA: (30.0, 18.0), SUBMAXILAR: (30.0, 18.0), TRAQUEA: (0.0, 0.0),
-                 ESOFAGO: (4.0, 2.5), VASOS: (6.0, 3.0)}      # vasos: pool sanguíneo
+                 ESOFAGO: (4.0, 2.5), VASOS: (6.0, 3.0),      # vasos: pool sanguíneo (incluye cavidades cardíacas)
+                 MIOCARDIO: (60.0, 45.0), HIGADO: (50.0, 20.0)}   # el miocardio retiene, el hígado lava
 RETENCION_ADENOMA = 0.8
 
 CASOS = {
@@ -52,9 +53,9 @@ def _objetivo(reg: np.ndarray, iso: float, sitio: str, r: float):
         cerca = np.abs(ez - kz) <= 2
         return (kz, ey[cerca].max() + r, ex[cerca].mean())
     if sitio == "mediastinico":
-        k = 3 + int(round(8 / iso))
+        k = int(zs.min() - 35 / iso)                          # 3.5 cm bajo el polo inferior: mediastino superior (timo)
         tys2, txs2 = np.nonzero(reg[k] == TRAQUEA)
-        return (k, tys2.mean() - 8 / iso, txs2.mean() - 8 / iso)
+        return (k, tys2.mean() - 28 / iso, txs2.mean())       # prevascular, retroesternal
     raise ValueError(sitio)
 
 

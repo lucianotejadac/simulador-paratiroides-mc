@@ -17,7 +17,9 @@ import shutil
 
 import numpy as np
 
-from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, TRAQUEA, ESOFAGO, VASOS, NOMBRES, montaje
+from scipy import ndimage
+
+from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, TRAQUEA, ESOFAGO, VASOS, MIOCARDIO, HIGADO, NOMBRES, montaje
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -40,10 +42,17 @@ def main():
     reg[m("thyroid_gland")] = TIROIDES
     reg[m("esophagus")] = ESOFAGO
     reg[m("common_carotid_artery_left", "common_carotid_artery_right", "subclavian_artery_left", "subclavian_artery_right",
-          "brachiocephalic_trunk", "brachiocephalic_vein_left", "brachiocephalic_vein_right")] = VASOS
+          "brachiocephalic_trunk", "brachiocephalic_vein_left", "brachiocephalic_vein_right", "aorta", "superior_vena_cava", "pulmonary_vein")] = VASOS
+    # corazón: TotalSegmentator lo da entero (paredes + cavidades). En CT sin contraste no se separan, así que
+    # el miocardio se aproxima como una cáscara de 8 mm y el interior como pool sanguíneo (BITACORA 0004).
+    corazon = m("heart")
+    interior = ndimage.binary_erosion(corazon, iterations=max(1, int(round(8.0 / iso))))
+    reg[corazon & ~interior] = MIOCARDIO
+    reg[interior] = VASOS
+    reg[m("liver")] = HIGADO
     reg[m("trachea") & (hu < -300)] = TRAQUEA
-    reg[m("lung_upper_lobe_left", "lung_upper_lobe_right") & (hu < -300)] = PULMON
-    hueso_ts = np.isin(et, [v for k, v in nombres.items() if k.startswith("vertebrae_") or k.startswith("clavicula")])
+    reg[m("lung_upper_lobe_left", "lung_upper_lobe_right", "lung_middle_lobe_right", "lung_lower_lobe_left", "lung_lower_lobe_right") & (hu < -300)] = PULMON
+    hueso_ts = np.isin(et, [v for k, v in nombres.items() if k.startswith(("vertebrae_", "clavicula", "rib_", "sternum", "scapula", "humerus"))])
     reg[hueso_ts & (hu > 100)] = HUESO
     np.savez_compressed(os.path.join(s, "regiones.npz"), reg=reg)
     vol = {NOMBRES[i]: round(float((reg == i).sum()) * iso ** 3 / 1000.0, 1) for i in range(len(NOMBRES))}
