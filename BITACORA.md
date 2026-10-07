@@ -81,3 +81,52 @@ media (precoz), del orden de lo clínico para la actividad en el campo.
 - Glándulas salivales como elipsoides: reemplazables por segmentación manual.
 - Órbita de contorno (la circular de 20 cm deja el cuello lejos del colimador; la clínica acerca).
 - Versión WebGPU para el navegador.
+
+---
+
+## 0002 · 2026-10-07 · Contorneo con TotalSegmentator: los adenomas «inferiores» eran tiroideos
+
+**Pregunta del usuario.** ¿Cómo se validó la ubicación de los órganos? Respuesta honesta: la
+tiroides se revisó a ojo, el resto eran umbrales y elipsoides sin validación anatómica. Medida la
+posición de cada adenoma contra el CT, el retroesofágico tenía el 19 % de su volumen dentro de C7.
+
+**Decisión.** Contornear con una herramienta independiente: TotalSegmentator 2 (Wasserthal et al.,
+Radiology: AI 2023), red nnU-Net entrenada sobre CT, corrida localmente en CPU sobre el fantoma
+exportado a NIfTI con la geometría exacta (la salida cae en la misma grilla). Estructuras: tiroides,
+tráquea, esófago, C3–T2, clavículas, lóbulos superiores, carótidas, subclavias, tronco y venas
+braquiocefálicas. 85 s de inferencia.
+
+**Lo que mostró.**
+- Mi tiroides por umbral estaba corrida 16 mm hacia craneal: cubría los cortes 15–32 y la de
+  TotalSegmentator los 7–30; los cortes superiores de la mía eran cartílago laríngeo. Volúmenes
+  parecidos (11.8 y 13.2 mL) pero Dice 0.54.
+- Por eso los adenomas «inferiores», colocados bajo mi polo inferior, caían dentro de la tiroides
+  real (98 de 107 vóxeles en el derecho): simulaban nódulos tiroideos, no paratiroides.
+- **Lección:** un volumen plausible no valida una segmentación; hay que medir solape contra una
+  referencia independiente. Y una segmentación por umbral de densidad confunde tejidos con la
+  misma densidad (cartílago calcificado y tiroides con yodo).
+
+**Cambios.**
+- `src/regiones_totalseg.py`: tiroides, tráquea, esófago, vasos (pool sanguíneo, 6/3 kBq/mL),
+  vértebras y clavículas de TotalSegmentator; se conserva del umbral solo lo que la red no cubre
+  (laringe y vía aérea alta, salivales, resto del hueso). La versión anterior queda en
+  `salida/regiones_umbral.npz`.
+- `src/actividad.py`: el adenoma se coloca en el vóxel más cercano al objetivo anatómico donde la
+  esfera entera cabe en tejido blando libre (−200 a 150 HU, sin tiroides, esófago, tráquea, vasos,
+  hueso ni pulmón), calculado como erosión del tejido libre por la esfera. La verdad registra el
+  objetivo y el desvío.
+- Resultado: inferior derecho en el surco traqueoesofágico bajo el polo (a 3 mm del objetivo),
+  inferior izquierdo lateral a la tráquea junto al polo (4 mm), retroesofágico posterolateral
+  izquierdo al esófago, prevertebral (14 mm: detrás del esófago no hay 10 mm libres en este
+  cuello), mediastínico superior anterior a nivel de la escotadura esternal (13 mm). Ninguno toca
+  estructuras vecinas (bordes a 0.3–1.6 mm).
+
+**Entorno (trampas del Control de aplicaciones de Windows, otra vez).** Bloqueados: pandas 3.0.6
+(pasa 2.2.3), connected-components-3d 4.1.0 (pasa 3.18.0), la extensión compilada de torchvision
+0.29 (pasan torch 2.8.0 + torchvision 0.23.0 de CPU). torch 2.9 también cargaba, pero nnU-Net lo
+excluye explícitamente; se usó 2.8.
+
+**Queda abierto.** Glándulas salivales siguen como elipsoides (la tarea de cabeza de
+TotalSegmentator pide licencia académica); revisión de los contornos por un profesional en 3D
+Slicer; un adenoma en el polo superior (sitio más frecuente de las paratiroides superiores) que hoy
+no está entre los casos.

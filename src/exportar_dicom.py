@@ -40,8 +40,8 @@ def _base(ds: Dataset, meta: dict, caso: str, modalidad: str, uids: dict, serie_
     ds.PatientSex = meta.get("sexo", "") or "O"
     ds.PatientAge = meta.get("edad", "") or ""
     ds.PatientIdentityRemoved = "YES"
-    ds.DeidentificationMethod = "Fantoma sintetico derivado de CT publico (TCIA, desidentificado Per DICOM PS 3.15 AnnexE); actividad simulada"
-    ds.add_new((0x0012, 0x0063), "LO", "Simulacion Monte Carlo; CT base: TCIA (caso 2 de la entrega docente PET/CT)")
+    ds.DeidentificationMethod = "Fantoma de CT publico TCIA (PS3.15 AnnexE); actividad simulada"
+    ds.add_new((0x0012, 0x0063), "LO", "Simulacion Monte Carlo; CT base TCIA (caso 2 PET/CT docente)")
     ds.StudyInstanceUID = uids["estudio"]
     ds.FrameOfReferenceUID = uids["frame"]
     ds.StudyID = "SIMPARA"

@@ -14,13 +14,16 @@ import os
 
 import numpy as np
 
-from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA
+from scipy import ndimage
+
+from segmentar import AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # kBq/mL por región: (precoz, tardía)
 CONCENTRACION = {AIRE: (0.0, 0.0), BLANDO: (4.0, 2.5), HUESO: (3.0, 2.0), PULMON: (1.0, 0.6), TIROIDES: (40.0, 16.0),
-                 PAROTIDA: (30.0, 18.0), SUBMAXILAR: (30.0, 18.0), TRAQUEA: (0.0, 0.0)}
+                 PAROTIDA: (30.0, 18.0), SUBMAXILAR: (30.0, 18.0), TRAQUEA: (0.0, 0.0),
+                 ESOFAGO: (4.0, 2.5), VASOS: (6.0, 3.0)}      # vasos: pool sanguíneo
 RETENCION_ADENOMA = 0.8
 
 CASOS = {
@@ -32,28 +35,47 @@ CASOS = {
 }
 
 
-def centro_adenoma(reg: np.ndarray, iso: float, sitio: str):
-    """Centro (z, y, x) en vóxeles. z crece hacia la cabeza; y hacia posterior; x hacia la izquierda del paciente."""
+def _objetivo(reg: np.ndarray, iso: float, sitio: str, r: float):
+    """Punto anatómico al que debe acercarse el centro del adenoma (z, y, x en vóxeles)."""
     tir = reg == TIROIDES
     zs, ys, xs = np.nonzero(tir)
-    tr = reg == TRAQUEA
     kz = int(np.median(zs))
-    tys, txs = np.nonzero(tr[kz])
-    ty, tx = tys.mean(), txs.mean()
+    tys, txs = np.nonzero(reg[kz] == TRAQUEA)
+    tx = txs.mean()
     if sitio in ("inferior-derecho", "inferior-izquierdo"):
         lado = xs < tx if sitio == "inferior-derecho" else xs > tx
         lz, ly, lx = zs[lado], ys[lado], xs[lado]
-        z0 = lz.min()
-        polo = lz <= z0 + 4 / iso                      # últimos 8 mm del lóbulo
-        return (z0 - 2 / iso, ly[polo].mean() + 7 / iso, lx[polo].mean())
+        polo = lz <= lz.min() + 10 / iso                     # últimos 10 mm del lóbulo
+        return (lz.min() + 1, ly[polo].max(), lx[polo].mean())   # cara posterior del polo inferior
     if sitio == "retroesofagico":
-        return (kz - 6 / iso, ty + 26 / iso, tx + 3 / iso)
+        ez, ey, ex = np.nonzero(reg == ESOFAGO)
+        cerca = np.abs(ez - kz) <= 2
+        return (kz, ey[cerca].max() + r, ex[cerca].mean())
     if sitio == "mediastinico":
-        return (4 + 8 / iso, ty - 8 / iso, tx - 8 / iso)
+        k = 3 + int(round(8 / iso))
+        tys2, txs2 = np.nonzero(reg[k] == TRAQUEA)
+        return (k, tys2.mean() - 8 / iso, txs2.mean() - 8 / iso)
     raise ValueError(sitio)
 
 
-def mapas(reg: np.ndarray, iso: float, caso: dict | None):
+def centro_adenoma(reg: np.ndarray, iso: float, sitio: str, diametro_mm: float, hu: np.ndarray):
+    """Centro (z, y, x) del vóxel más cercano al objetivo anatómico donde la esfera entera cae en tejido blando
+    libre (−200 a 150 HU, sin tiroides, esófago, tráquea, vasos, hueso ni pulmón). Erosión del tejido libre
+    por la esfera = centros admisibles."""
+    r = diametro_mm / 2.0 / iso
+    libre = (reg == BLANDO) & (hu > -200) & (hu < 150)
+    n = int(np.ceil(r))
+    zz, yy, xx = np.ogrid[-n:n + 1, -n:n + 1, -n:n + 1]
+    bola = (zz ** 2 + yy ** 2 + xx ** 2) <= r * r
+    admisible = ndimage.binary_erosion(libre, structure=bola)
+    obj = _objetivo(reg, iso, sitio, r)
+    cz, cy, cx = np.nonzero(admisible)
+    d = np.sqrt((cz - obj[0]) ** 2 + (cy - obj[1]) ** 2 + (cx - obj[2]) ** 2)
+    i = int(np.argmin(d))
+    return (float(cz[i]), float(cy[i]), float(cx[i])), float(d[i] * iso), [float(v) for v in obj]
+
+
+def mapas(reg: np.ndarray, iso: float, caso: dict | None, hu: np.ndarray):
     pre = np.zeros(reg.shape, np.float32)
     tar = np.zeros(reg.shape, np.float32)
     for et, (a, b) in CONCENTRACION.items():
@@ -61,15 +83,14 @@ def mapas(reg: np.ndarray, iso: float, caso: dict | None):
         tar[reg == et] = b
     verdad = {"adenoma": None}
     if caso:
-        c = centro_adenoma(reg, iso, caso["sitio"])
+        c, desvio_mm, obj = centro_adenoma(reg, iso, caso["sitio"], caso["diametro_mm"], hu)
         r = caso["diametro_mm"] / 2.0 / iso
         z, y, x = np.ogrid[:reg.shape[0], :reg.shape[1], :reg.shape[2]]
         esfera = ((z - c[0]) ** 2 + (y - c[1]) ** 2 + (x - c[2]) ** 2) <= r * r
-        esfera &= reg != AIRE
         pre[esfera] = CONCENTRACION[TIROIDES][0] * caso["relacion"]
         tar[esfera] = CONCENTRACION[TIROIDES][0] * caso["relacion"] * RETENCION_ADENOMA
         verdad["adenoma"] = {**caso, "centro_voxel_zyx": [float(v) for v in c], "centro_mm_zyx": [float(v * iso) for v in c],
-                             "volumen_ml": float(esfera.sum() * iso ** 3 / 1000.0),
+                             "volumen_ml": float(esfera.sum() * iso ** 3 / 1000.0), "objetivo_voxel_zyx": obj, "desvio_del_objetivo_mm": desvio_mm,
                              "concentracion_kbq_ml": [CONCENTRACION[TIROIDES][0] * caso["relacion"], CONCENTRACION[TIROIDES][0] * caso["relacion"] * RETENCION_ADENOMA]}
     return pre, tar, verdad
 
@@ -83,7 +104,7 @@ def main():
     iso = float(f["iso"])
     vox_ml = iso ** 3 / 1000.0
     for nombre in a.casos.split(","):
-        pre, tar, verdad = mapas(reg, iso, CASOS[nombre])
+        pre, tar, verdad = mapas(reg, iso, CASOS[nombre], f["hu"])
         carpeta = os.path.join(RAIZ, "salida", "casos", nombre)
         os.makedirs(carpeta, exist_ok=True)
         np.save(os.path.join(carpeta, "actividad_precoz.npy"), pre)
@@ -93,7 +114,7 @@ def main():
         json.dump(verdad, open(os.path.join(carpeta, "verdad.json"), "w", encoding="utf-8"), indent=2, ensure_ascii=False)
         ad = verdad["adenoma"]
         print(f"{nombre}: actividad en el campo {verdad['actividad_total_MBq'][0]:.1f} / {verdad['actividad_total_MBq'][1]:.1f} MBq"
-              + (f"; adenoma {ad['diametro_mm']} mm ({ad['volumen_ml']:.2f} mL) en z,y,x = {[round(v) for v in ad['centro_mm_zyx']]} mm, relación {ad['relacion']}" if ad else ""))
+              + (f"; adenoma {ad['diametro_mm']} mm ({ad['volumen_ml']:.2f} mL) en z,y,x = {[round(v) for v in ad['centro_mm_zyx']]} mm, a {ad['desvio_del_objetivo_mm']:.1f} mm del objetivo, relación {ad['relacion']}" if ad else ""))
 
 
 if __name__ == "__main__":

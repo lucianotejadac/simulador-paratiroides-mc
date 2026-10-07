@@ -16,8 +16,8 @@ import numpy as np
 from scipy import ndimage
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA = range(8)
-NOMBRES = ["aire", "tejido blando", "hueso", "pulmón/vía aérea", "tiroides", "parótidas", "submaxilares", "tráquea"]
+AIRE, BLANDO, HUESO, PULMON, TIROIDES, PAROTIDA, SUBMAXILAR, TRAQUEA, ESOFAGO, VASOS = range(10)
+NOMBRES = ["aire", "tejido blando", "hueso", "pulmón/vía aérea", "tiroides", "parótidas", "submaxilares", "tráquea", "esófago", "vasos"]
 
 
 def traquea_por_corte(hu, cuerpo):
@@ -138,7 +138,7 @@ def main():
     # índice del corte del cuello dentro del fantoma remuestreado
     z_cuello_idx = int(round((meta["z_cuello_mm"] - meta["origen_mm"][2]) / iso))
     reg, centros = segmentar(hu, iso, z_cuello_idx)
-    vol_ml = {NOMBRES[i]: round(float((reg == i).sum()) * iso ** 3 / 1000.0, 1) for i in range(8)}
+    vol_ml = {NOMBRES[i]: round(float((reg == i).sum()) * iso ** 3 / 1000.0, 1) for i in range(len(NOMBRES))}
     zt = np.nonzero((reg == TIROIDES).any(axis=(1, 2)))[0]
     k_t = int(zt.mean()) if len(zt) else z_cuello_idx - int(60 / iso)
     ks = montaje(hu, reg, os.path.join(RAIZ, "salida", "regiones.png"), k_t)

@@ -1,0 +1,74 @@
+{
+ "volumenes_ml": {
+  "lung_upper_lobe_left": 79.9,
+  "lung_upper_lobe_right": 69.6,
+  "esophagus": 7.1,
+  "trachea": 15.8,
+  "thyroid_gland": 13.2,
+  "vertebrae_T2": 28.7,
+  "vertebrae_T1": 30.9,
+  "vertebrae_C7": 25.3,
+  "vertebrae_C6": 19.0,
+  "vertebrae_C5": 16.7,
+  "vertebrae_C4": 15.0,
+  "vertebrae_C3": 15.9,
+  "subclavian_artery_right": 4.8,
+  "subclavian_artery_left": 4.4,
+  "common_carotid_artery_right": 4.0,
+  "common_carotid_artery_left": 3.6,
+  "brachiocephalic_vein_left": 1.2,
+  "brachiocephalic_vein_right": 0.8,
+  "clavicula_left": 38.8,
+  "clavicula_right": 39.6
+ },
+ "adenomas": {
+  "inferior-derecho-12": {
+   "vóxeles": 107,
+   "ocupa": {
+    "thyroid_gland": 98
+   },
+   "distancia_centro_mm": {
+    "tiroides": 0.0,
+    "esófago": 8.5,
+    "tráquea": 8.2,
+    "vértebra": 17.4
+   }
+  },
+  "inferior-izquierdo-8": {
+   "vóxeles": 32,
+   "ocupa": {
+    "thyroid_gland": 22,
+    "common_carotid_artery_left": 2
+   },
+   "distancia_centro_mm": {
+    "tiroides": 0.0,
+    "esófago": 14.1,
+    "tráquea": 6.0,
+    "vértebra": 22.4
+   }
+  },
+  "retroesofagico-10": {
+   "vóxeles": 64,
+   "ocupa": {
+    "esophagus": 5,
+    "vertebrae_C7": 13
+   },
+   "distancia_centro_mm": {
+    "tiroides": 17.9,
+    "esófago": 4.5,
+    "tráquea": 10.8,
+    "vértebra": 2.0
+   }
+  },
+  "mediastinico-15": {
+   "vóxeles": 216,
+   "ocupa": {},
+   "distancia_centro_mm": {
+    "tiroides": 10.2,
+    "esófago": 28.6,
+    "tráquea": 8.5,
+    "vértebra": 39.7
+   }
+  }
+ }
+}

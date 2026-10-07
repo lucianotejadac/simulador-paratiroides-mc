@@ -9,3 +9,4 @@ salida/casos/*/recon.log
 salida/fantoma.npz
 salida/regiones.npz
 salida/dicom/
+salida/totalseg/total_torch29.nii.gz

@@ -28,13 +28,24 @@ CT (TCIA, público) ──► fantoma.py ──► mu(140 keV) a 2 mm ──► 
 ```bash
 python -m venv .venv && .venv/Scripts/pip install numpy pydicom numba==0.61.2 pillow scipy pytest
 python src/fantoma.py            # lee el CT, recorta el cuello, remuestrea, HU -> mu
-python src/segmentar.py          # tiroides, tráquea, hueso, vía aérea, salivales
+python src/segmentar.py          # regiones por umbral (hueso, vía aérea, salivales)
+TotalSegmentator -i salida/totalseg/cuello_ct.nii.gz -o salida/totalseg/total.nii.gz --ml -d cpu --roi_subset thyroid_gland esophagus trachea ...
+python src/comparar_totalseg.py  # compara y guarda las etiquetas en la grilla del fantoma
+python src/regiones_totalseg.py  # tiroides, tráquea, esófago y vasos de TotalSegmentator
 python src/actividad.py          # mapas de actividad por caso y fase
 python src/simular_caso.py --caso inferior-derecho-12 --historias 2000000
 python src/reconstruir.py --caso inferior-derecho-12 --fase precoz
 python src/exportar_dicom.py --caso inferior-derecho-12 --numero 1
 python -m pytest -q tests        # validación del motor contra lo conocido de una LEHR
 ```
+
+## Contornos
+
+Tiroides, tráquea, esófago, vasos del cuello, vértebras y clavículas vienen de
+[TotalSegmentator](https://github.com/wasserth/TotalSegmentator) (Wasserthal et al., 2023), corrido en CPU.
+Los adenomas se colocan donde la esfera entera cabe en tejido blando libre, lo más cerca del sitio
+anatómico pedido. Requisitos extra: `torch==2.8.0` y `torchvision==0.23.0` de CPU, `totalsegmentator`,
+`pandas==2.2.3`, `connected-components-3d==3.18.0` (versiones que pasan el Control de aplicaciones de Windows).
 
 ## El motor (`src/montecarlo.py`)
 
@@ -64,7 +75,9 @@ uno con fase precoz (15 min) y tardía (2 h). Detalles, trampas y validación en
 
 ```
 src/fantoma.py        CT -> fantoma de atenuación (npz + json + montaje png)
-src/segmentar.py      regiones (npz) y montajes de control
+src/segmentar.py      regiones por umbral (npz) y montajes de control
+src/comparar_totalseg.py  TotalSegmentator vs umbral; posición de los adenomas
+src/regiones_totalseg.py  regiones finales con las estructuras de TotalSegmentator
 src/actividad.py      casos y mapas de actividad (npy + verdad.json)
 src/montecarlo.py     motor Monte Carlo (Numba)
 src/simular_caso.py   adquisición de un caso (proyecciones npz + png + adquisicion.json)

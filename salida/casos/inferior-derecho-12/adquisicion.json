@@ -21,21 +21,21 @@
   "fases": {
     "precoz": {
       "historias": 2000000,
-      "fotoelectricos": 53193,
-      "compton": 1962564,
-      "emitidos_por_proyeccion": 478510828.6000002,
-      "actividad_MBq": 21.530296000000007,
-      "cuentas_medias_por_proyeccion": 22676.958894885956,
-      "segundos": 66.0
+      "fotoelectricos": 53537,
+      "compton": 1957474,
+      "emitidos_por_proyeccion": 480049509.8000002,
+      "actividad_MBq": 21.599528000000007,
+      "cuentas_medias_por_proyeccion": 22698.966130078657,
+      "segundos": 63.0
     },
     "tardia": {
       "historias": 2000000,
-      "fotoelectricos": 53441,
-      "compton": 1958272,
-      "emitidos_por_proyeccion": 298186851.017961,
-      "actividad_MBq": 13.416731204407695,
-      "cuentas_medias_por_proyeccion": 14114.569346361675,
-      "segundos": 66.8
+      "fotoelectricos": 53585,
+      "compton": 1958682,
+      "emitidos_por_proyeccion": 298671658.27767277,
+      "actividad_MBq": 13.438544804394725,
+      "cuentas_medias_por_proyeccion": 14111.788309085909,
+      "segundos": 62.4
     }
   }
 }

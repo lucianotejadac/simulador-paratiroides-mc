@@ -1,13 +1,15 @@
 {
   "volumen_ml": {
     "aire": 18935.7,
-    "tejido blando": 4482.1,
-    "hueso": 630.4,
-    "pulmón/vía aérea": 184.9,
-    "tiroides": 11.8,
+    "tejido blando": 4417.6,
+    "hueso": 667.7,
+    "pulmón/vía aérea": 184.3,
+    "tiroides": 13.2,
     "parótidas": 20.9,
     "submaxilares": 11.7,
-    "tráquea": 52.7
+    "tráquea": 53.2,
+    "esófago": 7.1,
+    "vasos": 18.8
   },
   "nombres": [
     "aire",
@@ -17,23 +19,13 @@
     "tiroides",
     "parótidas",
     "submaxilares",
-    "tráquea"
+    "tráquea",
+    "esófago",
+    "vasos"
   ],
-  "z_cuello_idx": 60,
-  "cortes_montaje": [
-    15,
-    19,
-    23,
-    27,
-    31,
-    53
-  ],
+  "fuente": "TotalSegmentator 2 (total, roi_subset) + umbral para lo no cubierto",
   "tiroides_cortes": [
-    15,
-    32
-  ],
-  "traquea_cortes": [
-    0,
-    95
+    7,
+    30
   ]
 }
