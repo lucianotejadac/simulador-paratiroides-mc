@@ -93,3 +93,9 @@ docs/                 página de GitHub Pages con los cinco casos
 tests/                validación del motor
 salida/               resultados (los pesados no se versionan)
 ```
+
+## Editar contornos
+
+En la página, «Editar contornos» bajo el corte axial: pincel, borrador, deshacer y copiar del corte vecino.
+Las correcciones se descargan como JSON; `python src/importar_correcciones.py archivo.json --rehacer` las
+aplica a la grilla del fantoma y rehace la simulación.

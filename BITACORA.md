@@ -192,3 +192,29 @@ la tráquea, esófago posterior y carótidas laterales.
 fondo del fantoma: 26 040 vóxeles de tejido blando con actividad, visibles como una línea vertical en
 la panorámica de prueba. Corregido con `mode="nearest"`. El fantoma de cuello publicado antes no
 tenía la pared (se verificó), porque su borde caía en aire.
+
+---
+
+## 0005 · 2026-10-07 · Editor de contornos en la página
+
+**Pedido.** Poder modificar el contorneo desde el HTML (opción elegida: editor integrado en la página, la
+simulación se rehace aparte).
+
+**Decisiones.**
+- `docs/editor.js`, común con simulador-renograma-mc: pincel y borrador por estructura con tamaño ajustable,
+  deshacer (30 pasos por corte), copiar la estructura del corte anterior o siguiente, restaurar el corte.
+  Nunca pinta fuera del cuerpo; el borrador devuelve lo que había debajo.
+- Las correcciones se guardan solas en el navegador (localStorage) y se descargan como JSON que trae solo
+  los píxeles cambiados por corte. Se pueden volver a cargar para seguir otro día.
+- `src/importar_correcciones.py` lleva esos cambios del corte de la página (grilla SPECT, 2.4 mm en el
+  plano, 4.8 mm entre cortes) a cada vóxel del fantoma con la misma correspondencia de contornos_web.py, y
+  solo toca lo corregido; con `--rehacer` recalcula actividad, simulación y página. No volver a correr
+  regiones_totalseg.py después, porque regeneraría las regiones y borraría las correcciones.
+
+**Pruebas.** Puntero sobre la página sin cabeza (eventos simulados): un clic con pincel 1 cae a menos de medio
+píxel del puntero. Importador: borrar la tiroides de un corte (82 sub-píxeles) quita 2.7 mL en el fantoma
+(un corte de 4.8 mm abarca algo más de dos cortes de 2 mm).
+
+**Trampas.** Con pincel de tamaño 1 y el puntero cerca de la esquina de un píxel no se pintaba nada: el
+píxel bajo el puntero ahora entra siempre. Los movimientos que llegaban antes de que el corte terminara de
+cargarse se perdían; con el corte ya cargado, el trazo empieza sin demora.
