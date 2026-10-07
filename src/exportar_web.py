@@ -1,7 +1,6 @@
 """Paso 9: datos compactos para la página de GitHub Pages (docs/).
 
 Por caso escribe en docs/datos/<caso>/:
-  ct.bin            uint8 (nz, 128, 128): CT remuestreado a la grilla del SPECT, ventana 40/400
   nm_precoz.bin     uint8 (nz, 128, 128): reconstrucción OSEM filtrada, escalada a su máximo
   nm_tardia.bin     idem
   proy_precoz.bin   uint8 (60, 128, 128): proyecciones con ruido, escaladas al percentil 99.8
@@ -43,13 +42,12 @@ def main():
     def a_grilla(c_zyx):
         return [c_zyx[0] * esc + desplaz[0] - z0, c_zyx[1] * esc + desplaz[1], c_zyx[2] * esc + desplaz[2]]
 
-    indice = {"casos": [], "nz": nz, "matriz": matriz, "pixel_mm": pix_mm, "paciente_ct": "TCIA, caso 2 de la entrega docente PET/CT (anónimo)"}
+    indice = {"casos": [], "nz": nz, "z0": z0, "matriz": matriz, "pixel_mm": pix_mm, "paciente_ct": "TCIA, caso 2 de la entrega docente PET/CT (anónimo)"}
     os.makedirs(os.path.join(RAIZ, "docs", "dicom"), exist_ok=True)
     for caso in CASOS:
         carpeta = os.path.join(RAIZ, "salida", "casos", caso)
         destino = os.path.join(RAIZ, "docs", "datos", caso)
         os.makedirs(destino, exist_ok=True)
-        ct8.tofile(os.path.join(destino, "ct.bin"))
         verdad = json.load(open(os.path.join(carpeta, "verdad.json"), encoding="utf-8"))
         adq = json.load(open(os.path.join(carpeta, "adquisicion.json"), encoding="utf-8"))
         meta = {"caso": caso, "nz": nz, "matriz": matriz, "pixel_mm": pix_mm, "fases": {}, "adenoma": None,

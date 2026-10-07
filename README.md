@@ -35,6 +35,7 @@ python src/regiones_totalseg.py  # tiroides, tráquea, esófago y vasos de Total
 python src/actividad.py          # mapas de actividad por caso y fase
 python src/simular_caso.py --caso inferior-derecho-12 --historias 2000000
 python src/reconstruir.py --caso inferior-derecho-12 --fase precoz
+python src/ct_alta.py              # CT original (0.98 mm) para mostrar y exportar
 python src/exportar_dicom.py --caso inferior-derecho-12 --numero 1
 python -m pytest -q tests        # validación del motor contra lo conocido de una LEHR
 ```
@@ -85,6 +86,7 @@ src/reconstruir.py    OSEM con atenuación y filtro posterior
 src/exportar_dicom.py DICOM CT + NM (reglas del visor_dicom)
 src/verificar.py      comprueba los DICOM contra las reglas del visor y de la fusión
 src/exportar_web.py   datos compactos y ZIP para la página (docs/)
+src/ct_alta.py        CT a la resolución del tomógrafo para la página y los DICOM
 docs/                 página de GitHub Pages con los cinco casos
 tests/                validación del motor
 salida/               resultados (los pesados no se versionan)

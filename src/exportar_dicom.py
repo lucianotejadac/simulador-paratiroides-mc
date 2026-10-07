@@ -75,8 +75,9 @@ def _archivo(sop_class: str, sop_uid: str) -> FileDataset:
     return ds
 
 
-def exportar_ct(hu: np.ndarray, iso: float, origen: list, meta: dict, caso: str, uids: dict, carpeta: str):
-    """hu (z,y,x) a iso mm, origen LPS del vóxel (0,0,0). Un archivo por corte, z creciente."""
+def exportar_ct(hu: np.ndarray, esp, origen: list, meta: dict, caso: str, uids: dict, carpeta: str):
+    """hu (z,y,x) con espaciado esp = (dz, dy, dx) mm, origen LPS del vóxel (0,0,0). Un archivo por corte, z creciente."""
+    dz, dy, dx = esp
     os.makedirs(carpeta, exist_ok=True)
     nz = hu.shape[0]
     for k in range(nz):
@@ -84,12 +85,12 @@ def exportar_ct(hu: np.ndarray, iso: float, origen: list, meta: dict, caso: str,
         _base(ds, meta, caso, "CT", uids, 2, "CT")
         ds.ImageType = ["DERIVED", "SECONDARY", "AXIAL"]
         ds.InstanceNumber = k + 1
-        ds.ImagePositionPatient = [f"{origen[0]:.4f}", f"{origen[1]:.4f}", f"{origen[2] + k * iso:.4f}"]
+        ds.ImagePositionPatient = [f"{origen[0]:.4f}", f"{origen[1]:.4f}", f"{origen[2] + k * dz:.4f}"]
         ds.ImageOrientationPatient = ["1", "0", "0", "0", "1", "0"]
-        ds.SliceLocation = f"{origen[2] + k * iso:.4f}"
-        ds.PixelSpacing = [f"{iso:.4f}", f"{iso:.4f}"]
-        ds.SliceThickness = f"{iso:.4f}"
-        ds.SpacingBetweenSlices = f"{iso:.4f}"
+        ds.SliceLocation = f"{origen[2] + k * dz:.4f}"
+        ds.PixelSpacing = [f"{dy:.6f}", f"{dx:.6f}"]
+        ds.SliceThickness = f"{dz:.4f}"
+        ds.SpacingBetweenSlices = f"{dz:.4f}"
         ds.KVP = "140"
         ds.Rows, ds.Columns = hu.shape[1], hu.shape[2]
         ds.SamplesPerPixel, ds.PhotometricInterpretation = 1, "MONOCHROME2"
@@ -207,7 +208,12 @@ def main():
     for fase in ("precoz", "tardia"):
         uids[f"serie_SPECT {fase.upper()} RECON AC"] = RAIZ_UID + f"1.{a.numero}.{4 if fase == 'precoz' else 5}"
         uids[f"serie_SPECT {fase.upper()} PROYECCIONES"] = RAIZ_UID + f"1.{a.numero}.{6 if fase == 'precoz' else 7}"
-    n_ct = exportar_ct(hu, iso, meta["origen_mm"], meta, a.caso, uids, os.path.join(salida, "CT"))
+    ruta_alta = os.path.join(RAIZ, "salida", "ct_alta.npz")
+    if os.path.exists(ruta_alta):                       # CT en la resolución original del tomógrafo
+        c = np.load(ruta_alta)
+        n_ct = exportar_ct(c["hu"], [float(v) for v in c["espaciado"]], [float(v) for v in c["origen"]], meta, a.caso, uids, os.path.join(salida, "CT"))
+    else:                                               # respaldo: el fantoma de 2 mm
+        n_ct = exportar_ct(hu, (iso, iso, iso), meta["origen_mm"], meta, a.caso, uids, os.path.join(salida, "CT"))
     resumen = {"paciente": uids["paciente"], "ct_cortes": n_ct, "fases": {}}
     for fase in a.fases.split(","):
         d = np.load(os.path.join(carpeta_caso, f"proyecciones_{fase}.npz"))

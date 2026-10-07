@@ -3,30 +3,31 @@
   {
    "caso": "normal",
    "adenoma": false,
-   "zip_mb": 2.6
+   "zip_mb": 3.9
   },
   {
    "caso": "inferior-derecho-12",
    "adenoma": true,
-   "zip_mb": 2.6
+   "zip_mb": 3.9
   },
   {
    "caso": "inferior-izquierdo-8",
    "adenoma": true,
-   "zip_mb": 2.6
+   "zip_mb": 3.9
   },
   {
    "caso": "retroesofagico-10",
    "adenoma": true,
-   "zip_mb": 2.6
+   "zip_mb": 3.9
   },
   {
    "caso": "mediastinico-15",
    "adenoma": true,
-   "zip_mb": 2.5
+   "zip_mb": 3.8
   }
  ],
  "nz": 58,
+ "z0": 35,
  "matriz": 128,
  "pixel_mm": 3.3,
  "paciente_ct": "TCIA, caso 2 de la entrega docente PET/CT (anónimo)"

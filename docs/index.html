@@ -56,10 +56,11 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     <a id="zip" href="#" download>Descargar DICOM (CT + SPECT)</a>
   </div>
   <div class="grid">
-    <div class="card"><h2>Cortes axiales fusionados <small>OSEM con corrección de atenuación · filtro 6 mm</small></h2>
-      <div class="stage"><canvas id="ax" width="512" height="512"></canvas><div class="hud" id="hud-ax"></div></div>
+    <div class="card"><h2>Cortes axiales fusionados <small>CT original 0.98 mm · SPECT OSEM con AC, filtro 6 mm</small></h2>
+      <div class="stage"><canvas id="ax" width="1024" height="1024"></canvas><div class="hud" id="hud-ax"></div></div>
       <div class="fila"><span class="lbl">Corte</span><input type="range" id="corte" min="0" max="57" value="20" aria-label="Corte axial"><span class="t" id="corte-t"></span></div>
-      <div class="fila"><span class="lbl">Fusión</span><input type="range" id="mezcla" min="0" max="100" value="65" aria-label="Opacidad del SPECT"><span class="lbl">Umbral</span><input type="range" id="umbral" min="0" max="60" value="12" aria-label="Umbral del SPECT"></div>
+      <div class="fila"><span class="lbl">Fusión</span><input type="range" id="mezcla" min="0" max="100" value="65" aria-label="Opacidad del SPECT"><span class="lbl">Umbral</span><input type="range" id="umbral" min="0" max="100" value="45" aria-label="Umbral del SPECT"></div>
+      <div class="fila"><span class="lbl">Ventana CT</span><button id="v-blando" class="primary">Partes blandas</button><button id="v-hueso">Hueso</button><button id="v-solo">Solo CT</button><span class="lbl">Zoom</span><select id="zoom" aria-label="Zoom"><option value="1">1×</option><option value="1.6" selected>1.6×</option><option value="2.2">2.2×</option><option value="3">3×</option></select></div>
       <div class="stage" style="max-width:100%"><canvas id="mip" width="512" height="232"></canvas><div class="hud">MIP anterior del SPECT (cabeza arriba)</div></div>
     </div>
     <div class="card"><h2>Proyecciones adquiridas <small>60 ángulos · 25 s cada una · cine</small></h2>
@@ -79,12 +80,16 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   var indice=null, meta=null, datos={}, caso=null, fase='precoz', verdad=false, playing=true, frame=45, last=null;
   var axC=$('ax').getContext('2d'), prC=$('pr').getContext('2d'), mipC=$('mip').getContext('2d');
   var N=128, NZ=58;
+  var ctHD=null, ctInfo=null, ventana={c:40,w:400};
+  var ctListo=fetch('datos/ct_hd.json').then(function(r){return r.json();}).then(function(j){ ctInfo=j; return fetch('datos/ct_hd.bin'); })
+    .then(function(r){ if(!r.ok) throw new Error('ct_hd.bin'); return r.arrayBuffer(); }).then(function(b){ ctHD=new Uint16Array(b); return true; });
+  var lienzoCT=document.createElement('canvas'), lienzoNM=document.createElement('canvas'); lienzoNM.width=128; lienzoNM.height=128;
   function cargarBin(url){ return fetch(url).then(function(r){ if(!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(function(b){ return new Uint8Array(b); }); }
   function cargarCaso(c){
     caso=c; datos={}; $('zip').href='dicom/'+c+'.zip';
     var base='datos/'+c+'/';
-    Promise.all([fetch(base+'meta.json').then(function(r){return r.json();}), cargarBin(base+'ct.bin'), cargarBin(base+'nm_precoz.bin'), cargarBin(base+'nm_tardia.bin'), cargarBin(base+'proy_precoz.bin'), cargarBin(base+'proy_tardia.bin')])
-      .then(function(r){ meta=r[0]; NZ=meta.nz; N=meta.matriz; datos={ct:r[1],nm:{precoz:r[2],tardia:r[3]},proy:{precoz:r[4],tardia:r[5]}}; $('corte').max=NZ-1; $('angulo').max=meta.fases.precoz.n_proy-1; verdad=false; $('verdad').textContent='Mostrar la verdad'; tabla(); dibujarTodo(); })
+    Promise.all([fetch(base+'meta.json').then(function(r){return r.json();}), ctListo, cargarBin(base+'nm_precoz.bin'), cargarBin(base+'nm_tardia.bin'), cargarBin(base+'proy_precoz.bin'), cargarBin(base+'proy_tardia.bin')])
+      .then(function(r){ meta=r[0]; NZ=meta.nz; N=meta.matriz; datos={ct:true,nm:{precoz:r[2],tardia:r[3]},proy:{precoz:r[4],tardia:r[5]}}; $('corte').max=NZ-1; $('angulo').max=meta.fases.precoz.n_proy-1; verdad=false; $('verdad').textContent='Mostrar la verdad'; tabla(); dibujarTodo(); })
       .catch(function(e){ $('hud-ax').textContent='No pude cargar '+e.message; });
   }
   function tabla(){
@@ -98,14 +103,25 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   var LUT=new Uint8ClampedArray(256*3);
   for(var i=0;i<256;i++){ var t=i/255; LUT[3*i]=Math.min(255,Math.round(255*Math.min(1,t*2.2))); LUT[3*i+1]=Math.round(255*Math.max(0,Math.min(1,(t-0.3)*1.8))); LUT[3*i+2]=Math.round(255*Math.max(0,Math.min(1,(t-0.75)*4))); }
   function dibujarAxial(){
-    if(!datos.ct) return;
+    if(!datos.ct||!ctHD) return;
     var k=parseInt($('corte').value,10), mez=$('mezcla').value/100, um=parseInt($('umbral').value,10);
-    var img=axC.createImageData(N,N), ct=datos.ct, nm=datos.nm[fase], off=k*N*N;
-    for(var i=0;i<N*N;i++){ var g=ct[off+i], v=nm[off+i], r=g,gg=g,b=g; if(v>um){ var a=mez*Math.min(1,(v-um)/40+0.35); r=g*(1-a)+LUT[3*v]*a; gg=g*(1-a)+LUT[3*v+1]*a; b=g*(1-a)+LUT[3*v+2]*a; } img.data[4*i]=r; img.data[4*i+1]=gg; img.data[4*i+2]=b; img.data[4*i+3]=255; }
-    var tmp=document.createElement('canvas'); tmp.width=N; tmp.height=N; tmp.getContext('2d').putImageData(img,0,0);
-    axC.imageSmoothingEnabled=true; axC.clearRect(0,0,512,512); axC.drawImage(tmp,0,0,512,512);
-    var esc=512/N;
-    if(verdad&&meta.adenoma){ var c=meta.adenoma.centro_grilla_zyx, rz=meta.adenoma.diametro_mm/2/meta.pixel_mm; var dz=Math.abs(k-c[0]); if(dz<=rz+0.5){ var rr=Math.sqrt(Math.max(0,rz*rz-dz*dz))+1.2; axC.strokeStyle='#4df0c8'; axC.lineWidth=2; axC.beginPath(); axC.arc((c[2]+0.5)*esc,(c[1]+0.5)*esc,rr*esc,0,6.283); axC.stroke(); } }
+    var L=ctInfo.lado, rc=ctInfo.recorte_yx, y0=rc[0], x0=rc[1], h=rc[2], w=rc[3];
+    if(lienzoCT.width!==L){ lienzoCT.width=L; lienzoCT.height=L; }
+    var cctx=lienzoCT.getContext('2d'), img=cctx.createImageData(L,L), off=k*h*w, lo=ventana.c-ventana.w/2+1024, esc=255/ventana.w, d=img.data;
+    for(var i=3;i<d.length;i+=4) d[i]=255;
+    for(var y=0;y<h;y++){ var fila=((y+y0)*L+x0)*4, src=off+y*w; for(var x=0;x<w;x++){ var g=(ctHD[src+x]-lo)*esc; g=g<0?0:(g>255?255:g); var p=fila+4*x; d[p]=g; d[p+1]=g; d[p+2]=g; } }
+    cctx.putImageData(img,0,0);
+    var nctx=lienzoNM.getContext('2d'), im2=nctx.createImageData(N,N), nm=datos.nm[fase], o2=k*N*N;
+    for(var i=0;i<N*N;i++){ var v=nm[o2+i], p=4*i; im2.data[p]=LUT[3*v]; im2.data[p+1]=LUT[3*v+1]; im2.data[p+2]=LUT[3*v+2]; im2.data[p+3]=v>um?Math.round(255*Math.min(1,(v-um)/40+0.35)):0; }
+    nctx.putImageData(im2,0,0);
+    axC.imageSmoothingEnabled=true; axC.imageSmoothingQuality='high';
+    axC.globalAlpha=1; axC.fillStyle='#000'; axC.fillRect(0,0,$('ax').width,$('ax').height);
+    var W=$('ax').width, z=parseFloat($('zoom').value), lado=L/z, sub=ctInfo.sub;
+    var cx=Math.min(Math.max(x0+w/2, lado/2), L-lado/2), cy=Math.min(Math.max(y0+h/2, lado/2), L-lado/2), vx=cx-lado/2, vy=cy-lado/2;
+    axC.drawImage(lienzoCT,vx,vy,lado,lado,0,0,W,W);
+    axC.globalAlpha=mez; axC.drawImage(lienzoNM,vx/sub,vy/sub,lado/sub,lado/sub,0,0,W,W); axC.globalAlpha=1;
+    var esc2=W/lado*sub, ox=-vx/sub*esc2, oy=-vy/sub*esc2;
+    if(verdad&&meta.adenoma){ var c=meta.adenoma.centro_grilla_zyx, rz=meta.adenoma.diametro_mm/2/meta.pixel_mm; var dz=Math.abs(k-c[0]); if(dz<=rz+0.5){ var rr=Math.sqrt(Math.max(0,rz*rz-dz*dz))+1.2; axC.strokeStyle='#4df0c8'; axC.lineWidth=2; axC.beginPath(); axC.arc(ox+(c[2]+0.5)*esc2,oy+(c[1]+0.5)*esc2,rr*esc2,0,6.283); axC.stroke(); } }
     $('hud-ax').textContent='corte '+(k+1)+' de '+NZ+' · '+(fase==='precoz'?'precoz':'tardía')+' · D ← → I';
     $('corte-t').textContent=((k-NZ/2)*meta.pixel_mm/10).toFixed(1)+' cm';
   }
@@ -131,7 +147,11 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   function nombreAngulo(a){ var d=((a-270)%360+360)%360; if(d<15||d>345)return 'anterior'; if(Math.abs(d-180)<15)return 'posterior'; if(Math.abs(d-90)<15)return 'lateral izquierda'; if(Math.abs(d-270)<15)return 'lateral derecha'; return d<180?'oblicua izquierda':'oblicua derecha'; }
   function dibujarTodo(){ dibujarAxial(); dibujarMip(); dibujarProy(); }
   $('corte').addEventListener('input',function(){dibujarAxial();dibujarMip();});
-  $('mezcla').addEventListener('input',dibujarAxial); $('umbral').addEventListener('input',dibujarAxial);
+  function ventanaCT(c,w,id){ ventana={c:c,w:w}; ['v-blando','v-hueso'].forEach(function(b){ $(b).className=(b===id)?'primary':''; }); dibujarAxial(); }
+  $('v-blando').addEventListener('click',function(){ ventanaCT(40,400,'v-blando'); });
+  $('v-hueso').addEventListener('click',function(){ ventanaCT(400,1800,'v-hueso'); });
+  var mezclaPrevia=65; $('v-solo').addEventListener('click',function(){ var m=$('mezcla'); if(parseInt(m.value,10)>0){ mezclaPrevia=m.value; m.value=0; this.textContent='Con SPECT'; } else { m.value=mezclaPrevia; this.textContent='Solo CT'; } dibujarAxial(); });
+  $('mezcla').addEventListener('input',dibujarAxial); $('zoom').addEventListener('change',dibujarAxial); $('umbral').addEventListener('input',dibujarAxial);
   $('angulo').addEventListener('input',function(){ frame=parseInt(this.value,10); playing=false; $('play').textContent='Reproducir'; dibujarProy(); });
   $('play').addEventListener('click',function(){ playing=!playing; this.textContent=playing?'Pausar':'Reproducir'; });
   $('anterior').addEventListener('click',function(){ var a=meta.fases[fase].angulos_grados, best=0, bd=1e9; for(var i=0;i<a.length;i++){ var d=Math.abs(((a[i]-270)%360+360)%360); d=Math.min(d,360-d); if(d<bd){bd=d;best=i;} } frame=best; $('angulo').value=best; playing=false; $('play').textContent='Reproducir'; dibujarProy(); });

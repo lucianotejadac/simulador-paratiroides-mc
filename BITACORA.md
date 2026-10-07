@@ -130,3 +130,22 @@ excluye explícitamente; se usó 2.8.
 TotalSegmentator pide licencia académica); revisión de los contornos por un profesional en 3D
 Slicer; un adenoma en el polo superior (sitio más frecuente de las paratiroides superiores) que hoy
 no está entre los casos.
+
+---
+
+## 0003 · 2026-10-07 · El CT a la resolución del tomógrafo
+
+**Pedido.** El CT se veía borroso: en la página se mostraba remuestreado a la grilla del SPECT
+(3.3 mm) y en los DICOM a la del fantoma (2 mm).
+
+**Decisión.** El fantoma de 2 mm sigue siendo el mapa de atenuación del Monte Carlo (la física no
+cambia); para mostrar y exportar se usa el CT original, con el mismo recorte del cuello, la misma
+máscara corporal y las mismas coordenadas LPS (`src/ct_alta.py`).
+- DICOM: 59 cortes de 0.98 mm en el plano y 3.27 mm entre cortes (los del tomógrafo, espaciado
+  uniforme verificado), misma identidad y `FrameOfReferenceUID` que el SPECT: la fusión sigue
+  alineada. Los cinco casos pasan `verificar.py`.
+- Página: el CT se muestrea a 4 sub-píxeles por píxel SPECT (0.825 mm, 512 × 512 por corte) en los
+  mismos cortes de la grilla, se guarda una sola vez (`docs/datos/ct_hd.bin`, uint16 HU+1024,
+  recortado al cuerpo, 17.5 MB) y el SPECT se superpone como capa suavizada. Se agregaron ventanas
+  de partes blandas y hueso, «solo CT» y zoom (1.6× por defecto); el umbral por defecto del SPECT
+  sube para que el fondo corporal no tiña todo el corte.
