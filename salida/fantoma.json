@@ -1,0 +1,35 @@
+{
+  "ct": "C:\\Users\\lucia\\Downloads\\PET CT\\ENTREGA PET\\PET Magdalena\\Caso 2\\CT",
+  "paciente": "PET-02",
+  "iso_mm": 2.0,
+  "forma_zyx": [
+    96,
+    132,
+    240
+  ],
+  "origen_mm": [
+    -247.070314,
+    -150.39067599999998,
+    -300.639984
+  ],
+  "recorte_indices": [
+    216,
+    275,
+    9,
+    280,
+    3,
+    494
+  ],
+  "z_cuello_mm": -179.649994,
+  "ct_espaciado_mm": [
+    3.270004,
+    0.976562,
+    0.976562
+  ],
+  "ct_cortes": 299,
+  "mu_agua_140": 0.1537,
+  "study_uid": "2.25.180819405185593892124487808077957470",
+  "frame_uid": "2.25.190706218781712185578593246276922316",
+  "sexo": "M",
+  "edad": "062Y"
+}

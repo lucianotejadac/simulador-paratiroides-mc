@@ -1,0 +1,41 @@
+{
+  "caso": "retroesofagico-10",
+  "camara": {
+    "angulos": 60,
+    "arco_grados": 360.0,
+    "radio_cm": 20.0,
+    "matriz": 128,
+    "pixel_mm": 3.3,
+    "tiempo_s": 25.0,
+    "colimador": "LEHR",
+    "ventana_keV": [
+      126.45,
+      154.55
+    ],
+    "resolucion_energia": 0.095,
+    "fwhm_intrinseca_mm": 3.8,
+    "g_geom": 0.00011710467265454331
+  },
+  "historias": 2000000,
+  "semilla": 1,
+  "fases": {
+    "precoz": {
+      "historias": 2000000,
+      "fotoelectricos": 53050,
+      "compton": 1960651,
+      "emitidos_por_proyeccion": 477913420.60000014,
+      "actividad_MBq": 21.503416000000005,
+      "cuentas_medias_por_proyeccion": 22644.57435759768,
+      "segundos": 62.9
+    },
+    "tardia": {
+      "historias": 2000000,
+      "fotoelectricos": 53934,
+      "compton": 1959922,
+      "emitidos_por_proyeccion": 297645805.617961,
+      "actividad_MBq": 13.392387204407694,
+      "cuentas_medias_por_proyeccion": 14094.695979712887,
+      "segundos": 64.1
+    }
+  }
+}

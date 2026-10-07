@@ -1,0 +1,39 @@
+{
+  "volumen_ml": {
+    "aire": 18935.7,
+    "tejido blando": 4482.1,
+    "hueso": 630.4,
+    "pulmón/vía aérea": 184.9,
+    "tiroides": 11.8,
+    "parótidas": 20.9,
+    "submaxilares": 11.7,
+    "tráquea": 52.7
+  },
+  "nombres": [
+    "aire",
+    "tejido blando",
+    "hueso",
+    "pulmón/vía aérea",
+    "tiroides",
+    "parótidas",
+    "submaxilares",
+    "tráquea"
+  ],
+  "z_cuello_idx": 60,
+  "cortes_montaje": [
+    15,
+    19,
+    23,
+    27,
+    31,
+    53
+  ],
+  "tiroides_cortes": [
+    15,
+    32
+  ],
+  "traquea_cortes": [
+    0,
+    95
+  ]
+}

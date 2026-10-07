@@ -1,0 +1,11 @@
+{
+  "caso": "inferior-derecho-12",
+  "fase": "precoz",
+  "iteraciones": 4,
+  "subconjuntos": 6,
+  "ac": true,
+  "psf_mm": 0.0,
+  "filtro_mm": 6.0,
+  "pixel_mm": 3.3,
+  "max": 2.7831029891967773
+}

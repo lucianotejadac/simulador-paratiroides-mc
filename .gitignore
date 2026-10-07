@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+scratch/
+salida/casos/*/actividad_*.npy
+salida/casos/*/proyecciones_*.npz
+salida/casos/*/recon_*.npy
+salida/casos/*/recon.log
+salida/fantoma.npz
+salida/regiones.npz
+salida/dicom/

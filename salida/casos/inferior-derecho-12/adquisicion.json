@@ -1,0 +1,41 @@
+{
+  "caso": "inferior-derecho-12",
+  "camara": {
+    "angulos": 60,
+    "arco_grados": 360.0,
+    "radio_cm": 20.0,
+    "matriz": 128,
+    "pixel_mm": 3.3,
+    "tiempo_s": 25.0,
+    "colimador": "LEHR",
+    "ventana_keV": [
+      126.45,
+      154.55
+    ],
+    "resolucion_energia": 0.095,
+    "fwhm_intrinseca_mm": 3.8,
+    "g_geom": 0.00011710467265454331
+  },
+  "historias": 2000000,
+  "semilla": 1,
+  "fases": {
+    "precoz": {
+      "historias": 2000000,
+      "fotoelectricos": 53193,
+      "compton": 1962564,
+      "emitidos_por_proyeccion": 478510828.6000002,
+      "actividad_MBq": 21.530296000000007,
+      "cuentas_medias_por_proyeccion": 22676.958894885956,
+      "segundos": 66.0
+    },
+    "tardia": {
+      "historias": 2000000,
+      "fotoelectricos": 53441,
+      "compton": 1958272,
+      "emitidos_por_proyeccion": 298186851.017961,
+      "actividad_MBq": 13.416731204407695,
+      "cuentas_medias_por_proyeccion": 14114.569346361675,
+      "segundos": 66.8
+    }
+  }
+}
