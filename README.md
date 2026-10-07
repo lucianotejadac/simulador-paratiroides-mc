@@ -96,6 +96,7 @@ salida/               resultados (los pesados no se versionan)
 
 ## Editar contornos
 
-En la página, «Editar contornos» bajo el corte axial: pincel, borrador, deshacer y copiar del corte vecino.
+En la página, la tarjeta «Editor de contornos»: planos axial, coronal y sagital; pincel, borrador, lazo,
+relleno por densidad, máscara por rango de HU, interpolación entre cortes y deshacer.
 Las correcciones se descargan como JSON; `python src/importar_correcciones.py archivo.json --rehacer` las
 aplica a la grilla del fantoma y rehace la simulación.

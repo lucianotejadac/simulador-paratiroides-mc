@@ -1,0 +1,1 @@
+{"forma_zyx": [186, 140, 250], "voxel_mm": 2.0, "origen_lps_mm": [-250.0, -150.39067599999998, -480.490021], "nombres": ["aire", "tejido blando", "hueso", "pulmón/vía aérea", "tiroides", "parótidas", "submaxilares", "tráquea", "esófago", "vasos", "miocardio", "hígado"], "codificacion_ct": "codigo = (HU + 1000) / 10"}

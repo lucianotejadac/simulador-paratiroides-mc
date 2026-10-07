@@ -62,8 +62,6 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <div class="fila"><span class="lbl">Fusión</span><input type="range" id="mezcla" min="0" max="100" value="65" aria-label="Opacidad del SPECT"><span class="lbl">Umbral</span><input type="range" id="umbral" min="0" max="100" value="45" aria-label="Umbral del SPECT"></div>
       <div class="fila"><span class="lbl">Ventana CT</span><button id="v-blando" class="primary">Partes blandas</button><button id="v-hueso">Hueso</button><button id="v-solo">Solo CT</button><span class="lbl">Zoom</span><select id="zoom" aria-label="Zoom"><option value="1">1×</option><option value="1.6" selected>1.6×</option><option value="2.2">2.2×</option><option value="3">3×</option></select></div>
       <div class="fila" id="ctl-cont"><label><input type="checkbox" id="c-todos" checked> <b>Contornos</b></label></div>
-      <div id="ctl-editor"></div>
-      <p class="tag" style="margin:0">Las correcciones se guardan en este navegador. Para que entren en la simulación, descarga el archivo y envíalo: se aplica a la grilla del fantoma y se rehacen los estudios.</p>
       <div class="stage" style="max-width:100%"><canvas id="mip" width="512" height="232"></canvas><div class="hud">MIP anterior del SPECT (cabeza arriba)</div></div>
     </div>
     <div class="card"><h2>Proyecciones adquiridas <small>60 ángulos · 25 s cada una · cine</small></h2>
@@ -80,9 +78,13 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     </div>
     <div class="fila"><span class="lbl">Brillo</span><input type="range" id="brillo" min="30" max="200" value="100" aria-label="Brillo de las panorámicas"><span class="t" id="pl-info"></span></div>
   </div>
+  <div class="card"><h2>Editor de contornos <small>axial · coronal · sagital · grilla de la simulación (2 mm)</small></h2>
+    <div id="editor3d"></div>
+    <p class="tag" style="margin:0">Rueda o flechas: cambiar de corte. Navegar: clic para mover el cruce de los tres planos. Máscara: el pincel, el lazo y el relleno solo tocan vóxeles en ese rango de HU. Interpolar: contornea una estructura en dos o más cortes del mismo plano y rellena los intermedios. Las correcciones se guardan en este navegador; para que entren en la simulación, descarga el archivo y envíalo.</p>
+  </div>
   <footer>El CT es el caso 2 de la entrega docente de PET/CT de The Cancer Imaging Archive (anónimo, desidentificado según DICOM PS 3.15); la tiroides, la tráquea, el esófago, los vasos y las vértebras se contornearon sobre él con TotalSegmentator (Wasserthal y otros, 2023), las glándulas salivales se aproximaron con elipsoides (contornos marcados «aprox.»), y la biodistribución del sestamibi se asignó por región. Cada adenoma ocupa solo tejido blando libre, sin tocar tiroides, esófago, vasos ni hueso. Cada fotón de 140 keV se siguió por el cuello hasta el colimador con el método de Woodcock, con interacciones fotoeléctrica y Compton y detección forzada hacia los 60 ángulos. Reconstrucción OSEM de 4 iteraciones y 6 subconjuntos con corrección de atenuación por el CT. Motor validado contra la sensibilidad y la resolución de una LEHR y contra la atenuación y dispersión en agua. Los DICOM descargables (CT, SPECT reconstruido y proyecciones crudas) abren en <a href="https://lucianotejadac.github.io/visor_dicom/">visor_dicom</a> y en MicroDicom, fusionables. Código, pruebas y bitácora en <a href="https://github.com/lucianotejadac/simulador-paratiroides-mc">github.com/lucianotejadac/simulador-paratiroides-mc</a> (MIT). Otros simuladores en <a href="https://lucianotejadac.github.io/">lucianotejadac.github.io</a>.</footer>
 </div>
-<script src="editor.js"></script>
+<script src="editor3d.js"></script>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id);};
@@ -98,20 +100,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
               {e:5,n:'Parótidas (aprox.)',c:[80,200,255],on:false},{e:6,n:'Submaxilares (aprox.)',c:[80,200,255],on:false},{e:2,n:'Hueso',c:[210,210,210],on:false},{e:3,n:'Pulmón y vía aérea',c:[110,140,255],on:false}];
   var contInfo=null, contEt=null, lienzoCont=document.createElement('canvas'), contClave='', vistaAx={vx:0,vy:0,lado:1}, ed=null;
   fetch('datos/contornos.json').then(function(r){return r.json();}).then(function(j){ contInfo=j; return fetch('datos/contornos.bin'); }).then(function(r){return r.arrayBuffer();})
-    .then(function(b){ contEt=new Uint8Array(b); armarControles(); armarEditor(); dibujarAxial(); }).catch(function(){});
-  function armarEditor(){
-    var r=contInfo.recorte_yx, h=r[2], w=r[3], lienzo=document.getElementById('ax');
-    ed=EditorContornos({contenedor:document.getElementById('ctl-editor'), lienzo:lienzo, fondo:1,
-      estructuras:CONT.filter(function(q){return [2,3].indexOf(q.e)<0;}),
-      corte:function(){ return parseInt(document.getElementById('corte').value,10); },
-      etiquetas:function(k){ return Promise.resolve({w:w,h:h,e:contEt.subarray(k*h*w,(k+1)*h*w)}); },
-      redibujar:function(){ contClave=''; dibujarAxial(); }, clave:'paratiroides-v2',
-      aEtiqueta:function(x,y){ var f=lienzo.width/lienzo.getBoundingClientRect().width, W=lienzo.width;
-        var u=vistaAx.vx+x*f/W*vistaAx.lado, v=vistaAx.vy+y*f/W*vistaAx.lado;      // unidades del CT de alta resolución
-        return [u/2-r[1], v/2-r[0]]; },
-      escalaPx:function(){ var f=lienzo.width/lienzo.getBoundingClientRect().width; return 2*lienzo.width/vistaAx.lado/f; },
-      meta:{pagina:'simulador-paratiroides-mc', grilla:'cortes de la grilla SPECT, 2 sub-píxeles por píxel', sub:contInfo.sub, lado:contInfo.lado, recorte_yx:r, nz:contInfo.nz, etiquetas:contInfo.etiquetas}});
-  }
+    .then(function(b){ contEt=new Uint8Array(b); armarControles(); dibujarAxial(); }).catch(function(){});
   function armarControles(){ var f=document.getElementById('ctl-cont');
     CONT.forEach(function(c,i){ var l=document.createElement('label'); l.title=(contInfo.etiquetas[c.e]||{}).fuente||''; l.innerHTML='<input type="checkbox" '+(c.on?'checked':'')+'> <span class="sw" style="display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;background:rgb('+c.c.join(',')+')"></span> '+c.n;
       l.firstChild.addEventListener('change',function(){ c.on=this.checked; contClave=''; dibujarAxial(); }); f.appendChild(l); });
@@ -203,6 +192,11 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     var p=meta.fases.precoz.planar, t2=meta.fases.tardia.planar; if(p&&t2) $('pl-info').textContent=(p.cuentas/1000).toFixed(0)+' k / '+(t2.cuentas/1000).toFixed(0)+' k cuentas';
   }
   $('brillo').addEventListener('input',dibujarPlanar);
+  window.editorVolumen=EditorVolumen({contenedor:document.getElementById('editor3d'), base:'datos/editor/', fondo:1, clave:'paratiroides-3d', pagina:'simulador-paratiroides-mc',
+    estructuras:[{e:4,n:'Tiroides',c:[255,90,90]},{e:8,n:'Esófago',c:[80,220,120]},{e:7,n:'Tráquea',c:[255,230,0]},{e:9,n:'Vasos',c:[230,70,230]},{e:10,n:'Miocardio (aprox.)',c:[255,160,40]},
+      {e:11,n:'Hígado',c:[160,110,60]},{e:5,n:'Parótidas (aprox.)',c:[80,200,255]},{e:6,n:'Submaxilares (aprox.)',c:[80,200,255]},{e:3,n:'Pulmón y vía aérea',c:[110,140,255],on:false},
+      {e:2,n:'Hueso',c:[210,210,210],on:false},{e:1,n:'Tejido blando',c:[120,120,120],on:false}],
+    corteInicial:function(lab,Z,Y,X){ var mejor=0,k0=Math.floor(Z/2); for(var z=0;z<Z;z++){ var n=0,o=z*Y*X; for(var i=0;i<Y*X;i++) if(lab[o+i]===4) n++; if(n>mejor){mejor=n;k0=z;} } return k0; }});
   function dibujarTodo(){ dibujarAxial(); dibujarMip(); dibujarProy(); dibujarPlanar(); }
   $('corte').addEventListener('input',function(){dibujarAxial();dibujarMip();});
   function ventanaCT(c,w,id){ ventana={c:c,w:w}; ['v-blando','v-hueso'].forEach(function(b){ $(b).className=(b===id)?'primary':''; }); dibujarAxial(); }
