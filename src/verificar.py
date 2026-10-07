@@ -65,7 +65,7 @@ def verificar_ct(carpeta):
     check(dz >= 1e-4 and float(np.max(np.abs(d - dz))) <= max(0.01, dz * 0.01), "espaciado Z uniforme", f"dz={dz:.3f}")
     check(int(f0.Rows) * int(f0.Columns) * len(filas) <= 128 * 1024 * 1024, "<= 128 M vóxeles")
     texto = str(f0).upper()
-    check("PET-02" not in texto and "TCIA" in texto.replace("TCIA", "TCIA"), "sin ID original (PET-02) en el CT exportado")
+    check("PET-02" not in texto and "MAGDALENA" not in texto, "sin ID ni ruta del CT original en el exportado")
     ipp = [float(v) for v in f0.ImagePositionPatient]
     ps = [float(v) for v in f0.PixelSpacing]
     return f0, [ipp[0], ipp[1], zs[0]], [ps[1], ps[0], dz], (len(filas), int(f0.Rows), int(f0.Columns))
